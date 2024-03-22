@@ -1,5 +1,5 @@
 [package]
-name = "{{project-name}}"
+name = "FMFP"
 version = "0.1.0"
 authors = ["{{authors}}"]
 edition = "2018"
@@ -12,6 +12,9 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 wasm-bindgen = "0.2.84"
+clap = { version = "4.5.3", features = ["derive"] }
+pest = "2.7.8"
+pest_derive = "2.7.8"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

@@ -1,0 +1,36 @@
+char = {ASCII_ALPHANUMERIC}
+var = {char}
+WHITESPACE = _{ " " }
+
+true_ = {"true"}
+false_ = {"false"}
+
+bin_op = _{add | mult}
+add = {"+"}
+mult = {"*"}
+
+boolean = {true_ | false_}
+
+arrow = _{"->"}
+iszero_ = _{"iszero"}
+if = _{"if"}
+then = _{"then"}
+else = _{"else"}
+fst_ = _{"fst"}
+snd_ = _{"snd"}
+comma = _{","}
+
+abs = {"\\" ~ var ~ arrow ~ expr}
+app = {"(" ~ expr ~ expr ~ ")"}
+iszero = {iszero_ ~ expr}
+int = @{ ASCII_DIGIT+ }
+binOp = {"(" ~ expr ~ bin_op ~ expr ~ ")"}
+ifThenElse = {if ~ expr ~ then ~ expr ~ else ~ expr}
+tuple = {"(" ~ expr ~ comma ~ expr ~ ")" }
+fst = {"(" ~ fst_ ~ expr ~ ")"}
+snd = {"(" ~ snd_ ~ expr ~ ")"}
+
+
+main = {SOI ~ expr ~ EOI}
+
+expr = _{snd | fst | tuple | ifThenElse | binOp | int | iszero | app | abs | boolean | var}
