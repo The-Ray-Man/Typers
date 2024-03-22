@@ -1,9 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import init from 'FMFP';
+import '@mantine/core/styles.css';
+import { createTheme, MantineProvider } from '@mantine/core';
+import { MathJaxContext } from 'better-react-mathjax';
+
+const theme = createTheme({
+  /** Put your mantine theme override here */
+});
 
 init().then(() => {
   const root = ReactDOM.createRoot(
@@ -11,7 +17,12 @@ init().then(() => {
   );
   root.render(
     <React.StrictMode>
+      <MathJaxContext>
+
+      <MantineProvider theme={theme}>
       <App />
+      </MantineProvider>
+      </MathJaxContext>
     </React.StrictMode>
   );
 

@@ -3,3 +3,4 @@ pub mod parser;
 pub mod rules;
 pub mod solver;
 pub mod tree;
+pub mod mathjax;

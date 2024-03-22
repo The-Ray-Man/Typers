@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::typers::{parser::AstNode, rules::TypeExpr};
+use crate::typers::{mathjax::MathJax, parser::AstNode, rules::TypeExpr};
 
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Debug, Clone)]
@@ -10,7 +10,6 @@ pub struct TreeTS {
     pub gamma: String,
     pub expr: String,
     pub constraints: Vec<TreeTS>,
-
 }
 
 
@@ -29,6 +28,7 @@ impl Display for Tree {
         write!(f, "{}\nrule(n: {}, \"{}\", label:\"{}\"),", constraints, num_constraints, bottom, self.expr.0.current_rule_str())
     }
 }
+
 impl Into<TreeTS> for Tree {
     fn into(self) -> TreeTS {
         let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<String>>().join(", ");
@@ -39,6 +39,16 @@ impl Into<TreeTS> for Tree {
             expr,
             constraints,
         }
+    }
+}
+
+impl MathJax for Tree{
+    fn to_mathjax(&self) -> String {
+
+        let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<String>>().join(", ");
+        let expr = format!("{} :: {}", self.expr.0.to_mathjax(), self.expr.1.to_mathjax());
+        let constraints = self.constraints.iter().map(|a| a.to_mathjax()).collect::<Vec<String>>().join("\\qquad");
+        format!("\\dfrac{{{}}} {{{} \\vdash {}}} \\textsf{{{}}}", constraints, gamma, expr, self.expr.0.current_rule_str())
     }
 }
 
@@ -97,7 +107,7 @@ impl TypeInference {
             AstNode::Var(var) => {
                 dbg!(&var);
                 let type_var = gamma.get(&var.to_string()).ok_or(format!("{} not found!", var).to_string())?;
-                self.add_constraint(&t, &type_var);
+                self.add_constraint(&type_var, &t);
                 let tree = Tree {
                     gamma,
                     expr: (ast, t),
