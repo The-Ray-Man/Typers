@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::typers::{parser::AstNode, rules::TypeExpr};
 
-// #[wasm_bindgen(getter_with_clone)]
+#[wasm_bindgen(getter_with_clone)]
 #[derive(Debug, Clone)]
 pub struct TreeTS {
     pub gamma: String,
