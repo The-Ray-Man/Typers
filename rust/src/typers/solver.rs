@@ -13,7 +13,7 @@ pub struct ResultRemoveStep {
     pub rules_removed: Vec<RuleExpr>,
 }
 
-impl Into::<ResultRemoveStepTS> for ResultRemoveStep {
+impl Into<ResultRemoveStepTS> for ResultRemoveStep {
     fn into(self) -> ResultRemoveStepTS {
         ResultRemoveStepTS {
             id: self.id,
@@ -45,7 +45,7 @@ pub struct ResultAccumulateStep {
     pub rules_compared: (RuleExpr, RuleExpr),
 }
 
-impl Into::<ResultAccumulateStepTS> for ResultAccumulateStep {
+impl Into<ResultAccumulateStepTS> for ResultAccumulateStep {
     fn into(self) -> ResultAccumulateStepTS {
         ResultAccumulateStepTS {
             id: self.id,
@@ -53,7 +53,10 @@ impl Into::<ResultAccumulateStepTS> for ResultAccumulateStep {
             rules_after: self.rules_after.iter().map(|x| x.to_mathjax()).collect(),
             text: self.text,
             rules_added: self.rules_added.iter().map(|x| x.to_mathjax()).collect(),
-            rules_compared: vec![self.rules_compared.0.to_mathjax(), self.rules_compared.1.to_mathjax()],
+            rules_compared: vec![
+                self.rules_compared.0.to_mathjax(),
+                self.rules_compared.1.to_mathjax(),
+            ],
         }
     }
 }
@@ -79,12 +82,16 @@ pub struct ResultSubstituteStep {
     pub text: Option<String>,
 }
 
-impl Into::<ResultSubstituteStepTS> for ResultSubstituteStep {
+impl Into<ResultSubstituteStepTS> for ResultSubstituteStep {
     fn into(self) -> ResultSubstituteStepTS {
         ResultSubstituteStepTS {
             id: self.id,
             goal_id: self.goal_id,
-            rules_available: self.rules_available.iter().map(|x| x.to_mathjax()).collect(),
+            rules_available: self
+                .rules_available
+                .iter()
+                .map(|x| x.to_mathjax())
+                .collect(),
             rule_goal_before: self.rule_goal_before.to_mathjax(),
             rule_goal_after: self.rule_goal_after.to_mathjax(),
             rule_used: self.rule_used.to_mathjax(),
@@ -103,7 +110,6 @@ pub struct ResultSubstituteStepTS {
     pub rule_used: String,
     pub text: Option<String>,
 }
-
 
 #[derive(Debug, Default)]
 pub struct Solution {
@@ -127,7 +133,7 @@ pub struct SolutionTS {
     pub result: Option<String>,
 }
 
-impl Into::<SolutionTS> for Solution {
+impl Into<SolutionTS> for Solution {
     fn into(self) -> SolutionTS {
         let result_error = match self.result.clone() {
             Some(Ok(rule)) => None,
@@ -143,17 +149,31 @@ impl Into::<SolutionTS> for Solution {
 
         SolutionTS {
             rules: self.rules.iter().map(|x| x.to_mathjax()).collect(),
-            variables: self.variables.iter().map(|x| format!("t_{{{}}}", x)).collect(),
-            result_remove_steps: self.result_remove_steps.iter().map(|x| (*x).clone().into()).collect(),
-            result_accumulate_steps: self.result_accumulate_steps.iter().map(|x| (*x).clone().into()).collect(),
-            result_substitute_steps: self.result_substitute_steps.iter().map(|x| (*x).clone().into()).collect(),
+            variables: self
+                .variables
+                .iter()
+                .map(|x| format!("t_{{{}}}", x))
+                .collect(),
+            result_remove_steps: self
+                .result_remove_steps
+                .iter()
+                .map(|x| (*x).clone().into())
+                .collect(),
+            result_accumulate_steps: self
+                .result_accumulate_steps
+                .iter()
+                .map(|x| (*x).clone().into())
+                .collect(),
+            result_substitute_steps: self
+                .result_substitute_steps
+                .iter()
+                .map(|x| (*x).clone().into())
+                .collect(),
             result_error,
             result,
         }
     }
 }
-
-
 
 pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution {
     let mut solution = Solution::default();
@@ -227,7 +247,7 @@ pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution 
     };
 
     loop {
-        let result = substitute_constraints(&mut rules,&mut goal_rule, goal_var,  counter);
+        let result = substitute_constraints(&mut rules, &mut goal_rule, goal_var, counter);
         match result {
             Ok(Some(step)) => {
                 solution.result_substitute_steps.push(step);
@@ -242,7 +262,6 @@ pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution 
             }
         }
     }
-
 
     solution.result = Some(Ok(goal_rule));
     solution
@@ -294,8 +313,6 @@ fn check_cycles(rules: &Vec<RuleExpr>) -> Result<(), String> {
         Ok(())
     }
 }
-
-
 
 fn variables(rules: Vec<RuleExpr>) -> Vec<usize> {
     let all_vars: HashSet<usize> = rules
@@ -381,7 +398,8 @@ fn accumulate_constraints(
             } else {
                 let msg = format!(
                     "impossible to combine these rules: \\({}\\) and \\({}\\)",
-                    rules[i].to_mathjax(), rules[j].to_mathjax()
+                    rules[i].to_mathjax(),
+                    rules[j].to_mathjax()
                 );
                 return Err(msg);
             }
@@ -395,7 +413,9 @@ fn find_goal_rule(rules: &mut Vec<RuleExpr>, goal_var: usize) -> Result<RuleExpr
     match rules.iter().find(|r| r.has_lhs(goal_var)) {
         Some(ref goal_rule) => Ok((*goal_rule).clone()),
         None => {
-            let msg = format!("could not find a constraint with \\(t_{{{goal_var}}}\\) on the left hand side");
+            let msg = format!(
+                "could not find a constraint with \\(t_{{{goal_var}}}\\) on the left hand side"
+            );
             Err(msg)
         }
     }
@@ -408,14 +428,11 @@ fn substitute_constraints(
     goal_var: usize,
     counter: i32,
 ) -> Result<Option<ResultSubstituteStep>, String> {
-
     let old_goal_rule = goal_rule.clone();
     // Substitute constraints one by one
     let rule_goal_before = goal_rule.clone();
     let rules_before = rules.clone();
     if let Some(rule) = goal_rule.substitute_constraint(&rules) {
-
-
         let rule_goal_after = goal_rule.clone();
 
         return Ok(Some(ResultSubstituteStep {

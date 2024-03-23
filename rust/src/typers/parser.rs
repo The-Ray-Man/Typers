@@ -21,10 +21,8 @@ impl fmt::Display for BinOp {
             BinOp::Plus => write!(f, "+"),
             BinOp::Mult => write!(f, "*"),
         }
- 
-   }
+    }
 }
-
 
 #[derive(Debug, Clone)]
 pub enum AstNode {
@@ -70,7 +68,9 @@ impl fmt::Display for AstNode {
             AstNode::True => write!(f, "true"),
             AstNode::False => write!(f, "false"),
             AstNode::Binop { op, lhs, rhs } => write!(f, "({} {} {})", lhs, op, rhs),
-            AstNode::IfThenElse { cond, then, else_ } => write!(f, "if {} then {} else {}", cond, then, else_),
+            AstNode::IfThenElse { cond, then, else_ } => {
+                write!(f, "if {} then {} else {}", cond, then, else_)
+            }
             AstNode::Tuple { fst, snd } => write!(f, "({}, {})", fst, snd),
             AstNode::Fst(expr) => write!(f, "fst {}", expr),
             AstNode::Snd(expr) => write!(f, "snd {}", expr),
@@ -78,7 +78,7 @@ impl fmt::Display for AstNode {
     }
 }
 
-impl MathJax for AstNode{
+impl MathJax for AstNode {
     fn to_mathjax(&self) -> String {
         match self {
             AstNode::Var(var) => var.clone(),
@@ -88,9 +88,18 @@ impl MathJax for AstNode{
             AstNode::Int(int) => int.to_string(),
             AstNode::True => "\\mathsf{{true}}".to_string(),
             AstNode::False => "\\mathsf{{false}}".to_string(),
-            AstNode::Binop { op, lhs, rhs } => format!("({} {} {})", lhs.to_mathjax(), op, rhs.to_mathjax()),
-            AstNode::IfThenElse { cond, then, else_ } => format!("\\mathsf{{if}} \\ {} \\ \\mathsf{{then}} \\ {} \\ \\mathsf{{else}} \\ {}", cond.to_mathjax(), then.to_mathjax(), else_.to_mathjax()),
-            AstNode::Tuple { fst, snd } => format!("({},\\ {})", fst.to_mathjax(), snd.to_mathjax()),
+            AstNode::Binop { op, lhs, rhs } => {
+                format!("({} {} {})", lhs.to_mathjax(), op, rhs.to_mathjax())
+            }
+            AstNode::IfThenElse { cond, then, else_ } => format!(
+                "\\mathsf{{if}} \\ {} \\ \\mathsf{{then}} \\ {} \\ \\mathsf{{else}} \\ {}",
+                cond.to_mathjax(),
+                then.to_mathjax(),
+                else_.to_mathjax()
+            ),
+            AstNode::Tuple { fst, snd } => {
+                format!("({},\\ {})", fst.to_mathjax(), snd.to_mathjax())
+            }
             AstNode::Fst(expr) => format!("\\mathsf{{fst}} \\ {}", expr.to_mathjax()),
             AstNode::Snd(expr) => format!("\\mathsf{{snd}} \\ {}", expr.to_mathjax()),
         }
@@ -116,7 +125,6 @@ impl AstNode {
         res.to_string()
     }
 }
-
 
 #[derive(pest_derive::Parser)]
 #[grammar = "./typers/miniHaskell.pest"]
@@ -156,15 +164,15 @@ impl MiniHaskellParser {
     pub fn build_ast_var(pair: Pair<Rule>) -> Result<AstNode, String> {
         Ok(AstNode::Var(pair.as_str().to_string()))
     }
-    
+
     pub fn build_ast_abs(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let var = pairs.next().ok_or("no var".to_string())?;
         let body = pairs.next().ok_or("no body".to_string())?;
-    
+
         let var = var.as_str().to_string();
         let body = Self::build_ast_(body)?;
-    
+
         Ok(AstNode::Abs {
             var,
             body: Box::new(body),
@@ -279,5 +287,4 @@ impl MiniHaskellParser {
         let expr = Self::build_ast_(expr)?;
         Ok(AstNode::Snd(Box::new(expr)))
     }
-
 }

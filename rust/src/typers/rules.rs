@@ -1,8 +1,8 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
+use crate::Tsify;
 use crate::{rule, var};
 use std::{collections::HashSet, fmt::Display};
-use crate::Tsify;
 
 use super::mathjax::MathJax;
 
@@ -33,7 +33,6 @@ impl RuleInfo for Vec<RuleExpr> {
     }
 }
 
-
 /// A type expression, it forms a recursive tree structure, therefore `Box<Type>` is needed
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum TypeExpr {
@@ -52,14 +51,18 @@ pub enum TypeExpr {
 impl MathJax for TypeExpr {
     fn to_mathjax(&self) -> String {
         match self {
-            TypeExpr::Function(left, right) => format!("({} \\to {})", left.to_mathjax(), right.to_mathjax()),
-            TypeExpr::Tuple(left, right) => format!("({}, {})", left.to_mathjax(), right.to_mathjax()),
+            TypeExpr::Function(left, right) => {
+                format!("({} \\to {})", left.to_mathjax(), right.to_mathjax())
+            }
+            TypeExpr::Tuple(left, right) => {
+                format!("({}, {})", left.to_mathjax(), right.to_mathjax())
+            }
             TypeExpr::Var(x) => format!("t_{{{}}}", x),
             TypeExpr::Bool => "Bool".to_string(),
             TypeExpr::Int => "Int".to_string(),
         }
     }
-} 
+}
 
 impl TypeExpr {
     /// Returns `Some(X)` if it could use rule with index `X` to substitute a variable
