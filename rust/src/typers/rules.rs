@@ -52,7 +52,7 @@ pub enum TypeExpr {
 impl MathJax for TypeExpr {
     fn to_mathjax(&self) -> String {
         match self {
-            TypeExpr::Function(left, right) => format!("{} \\to {}", left.to_mathjax(), right.to_mathjax()),
+            TypeExpr::Function(left, right) => format!("({} \\to {})", left.to_mathjax(), right.to_mathjax()),
             TypeExpr::Tuple(left, right) => format!("({}, {})", left.to_mathjax(), right.to_mathjax()),
             TypeExpr::Var(x) => format!("t_{}", x),
             TypeExpr::Bool => "Bool".to_string(),

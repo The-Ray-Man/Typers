@@ -318,7 +318,7 @@ fn remove_simple_rules(
     for i in 0..rules.len() {
         if let Some((mut from, mut to)) = rules[i].is_simple() {
             if from == to {
-                let error = format!("recursive definition t{from} = t{to}!");
+                let error = format!("recursive definition \\(t_{from}\\) = \\(t_{to}\\)!");
                 return Err(error);
             } else if from < to {
                 std::mem::swap(&mut to, &mut from);
@@ -380,8 +380,8 @@ fn accumulate_constraints(
                 }));
             } else {
                 let msg = format!(
-                    "impossible to combine these rules:\n{}\n{}",
-                    rules[i], rules[j]
+                    "\\(impossible to combine these rules:\n{}\n{}\\)",
+                    rules[i].to_mathjax(), rules[j].to_mathjax()
                 );
                 return Err(msg);
             }
@@ -395,7 +395,7 @@ fn find_goal_rule(rules: &mut Vec<RuleExpr>, goal_var: usize) -> Result<RuleExpr
     match rules.iter().find(|r| r.has_lhs(goal_var)) {
         Some(ref goal_rule) => Ok((*goal_rule).clone()),
         None => {
-            let msg = format!("could not find a constraint with t{goal_var} on the left hand side");
+            let msg = format!("could not find a constraint with \\(t_{goal_var}\\) on the left hand side");
             Err(msg)
         }
     }

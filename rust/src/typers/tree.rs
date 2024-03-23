@@ -45,7 +45,7 @@ impl Into<TreeTS> for Tree {
 impl MathJax for Tree{
     fn to_mathjax(&self) -> String {
 
-        let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<String>>().join(", ");
+        let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v.to_mathjax())).collect::<Vec<String>>().join(", ");
         let expr = format!("{} :: {}", self.expr.0.to_mathjax(), self.expr.1.to_mathjax());
         let constraints = self.constraints.iter().map(|a| a.to_mathjax()).collect::<Vec<String>>().join("\\qquad");
         format!("\\dfrac{{{}}} {{{} \\vdash {}}} \\textsf{{{}}}", constraints, gamma, expr, self.expr.0.current_rule_str())

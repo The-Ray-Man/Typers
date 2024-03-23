@@ -1,4 +1,4 @@
-import { Center, Code, Stack, Text, Textarea } from "@mantine/core";
+import { Box, Center, Code, Divider, Stack, Text, Textarea } from "@mantine/core";
 import { MathJax } from "better-react-mathjax";
 
 import Card from "../Card";
@@ -21,16 +21,13 @@ type Step = {
 
 const Solution = ({steps} : StepsProps) => {
 
-    console.log(steps)
-
-
     const all_steps = (steps : SolutionTS) => {
         let num_steps = steps.result_accumulate_steps.length + steps.result_remove_steps.length + steps.result_substitute_steps.length 
         let all_steps : React.ReactNode[] = []
         for (let i = 0; i<num_steps; i++) {
             let step_accumulate = steps.result_accumulate_steps.find((step) => step.id == i)
             if (step_accumulate) {
-                all_steps.push(<AccumulateStep step={step_accumulate} />)
+                all_steps.push(<AccumulateStep step={step_accumulate}/>)
             }
             let step_remove = steps.result_remove_steps.find((step) => step.id == i)
             if (step_remove) {
@@ -49,9 +46,20 @@ const Solution = ({steps} : StepsProps) => {
 
 
     return (
-        <Card title="Solution">
-            {all_steps(steps)}
-            {/* {all_steps(steps).map((step, index) => (<Text>{step.type}</Text>))} */}
+        <Card title="Solution - Step by Step">
+            <Box ps={"xl"} w={"100%"}>
+
+            {all_steps(steps).map((step, index) => (
+                <>
+                <Box w={"100%"} pb={"md"}>
+
+                {step}
+                </Box>
+                {index == all_steps(steps).length - 1 ? null : <Divider key={index} py={"md"} />}
+                </>
+            ))}
+            </Box>
+            {steps.result_error ? <MathJax style={{color: "red"}}>{steps.result_error}</MathJax> : null}
         </Card>
     );
     }

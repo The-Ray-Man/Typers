@@ -1,4 +1,4 @@
-import { Center, Flex, Stack, Text, Title } from "@mantine/core";
+import { Center, Flex, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { ResultAccumulateStepTS } from "FMFP";
 import { MathJax } from "better-react-mathjax";
 
@@ -12,11 +12,10 @@ const AccumulateStep = ({ step } : AccumulateStepProps) => {
 
     return (
         <Stack w={"100%"}>
-        <Center>
 
         <Title order={3}>Accumulate Step</Title>
-        </Center>
-        <Flex gap={"xl"} justify={"space-around"} w={"100%"}>
+
+        <SimpleGrid cols={3} w={"100%"}>
             <Stack>
                 <Text>Old Rules</Text>
                 {step.rules_before.map((rule) => {
@@ -49,7 +48,7 @@ const AccumulateStep = ({ step } : AccumulateStepProps) => {
                 
                 })}
             </Stack>
-        </Flex>
+        </SimpleGrid>
         </Stack>
     )
 

@@ -14,11 +14,9 @@ const SubstituteStep = ({ step } : SubstituteStepProps) => {
 
     return (
         <Stack w={"100%"}>
-        <Center>
 
         <Title order={3}>Substitute Step</Title>
-        </Center>
-        <Flex justify={"space-around"}  w={"100%"}>
+        <SimpleGrid cols={3} w={"100%"}>
             <Stack>
                 <Text>Rules Available</Text>
                 {step.rules_available.map((rule, index) => {
@@ -49,7 +47,7 @@ if (rule == step.rule_used) {
                 
             </Stack>
 
-        </Flex>
+        </SimpleGrid>
         </Stack>
     )
 

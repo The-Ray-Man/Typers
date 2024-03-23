@@ -1,4 +1,4 @@
-import { Center, Flex, Stack, Text, Title } from "@mantine/core";
+import { Center, Flex, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
 import { ResultRemoveStepTS } from "FMFP";
 import { MathJax } from "better-react-mathjax";
@@ -14,15 +14,12 @@ const RemoveStep = ({ step } : RemoveStepProps) => {
 
     return (
         <Stack w={"100%"}>
-        <Center>
 
         <Title order={3}>Remove Step</Title>
-        </Center>
-        <Center>
 
         <MathJax>{step.text}</MathJax>
-        </Center>
-        <Flex gap={"xl"} justify={"space-around"} w={"100%"}>
+
+        <SimpleGrid cols={3} w={"100%"}>
             <Stack>
                 {step.rules_before.map((rule) => {
                     if (step.rules_removed.includes(rule)) {
@@ -42,7 +39,7 @@ const RemoveStep = ({ step } : RemoveStepProps) => {
                 })
                }
             </Stack>
-        </Flex>
+        </SimpleGrid>
         </Stack>
     )
 
