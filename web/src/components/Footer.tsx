@@ -12,7 +12,7 @@ const Footer = () => {
                 </Center>
                 <Flex justify={"end"}>
 
-        <IconBrandGithub size={24} />
+        <IconBrandGithub size={24} href="https://github.com/The-Ray-Man/Typers"/>
                 </Flex>
             </SimpleGrid>
     );
