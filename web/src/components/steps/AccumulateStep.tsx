@@ -30,6 +30,7 @@ const AccumulateStep = ({ step } : AccumulateStepProps) => {
                 <Text>Compared Rules</Text>
                 {step.rules_compared.map((rule) => <MathJax style={{color: "blue"}}>{"\\(" + rule + "\\)"}</MathJax>)}
                 <Text>New Rules</Text>
+                {step.rules_added.length === 0 && <Text c={"dimmed"}>This Accumumulation did not yield any new rules</Text>}
                 {step.rules_added.map((rule) => <MathJax style={{color: "green"}}>{"\\(" + rule + "\\)"}</MathJax>)}
             </Stack>
             <Stack>

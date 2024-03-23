@@ -143,7 +143,7 @@ impl Into::<SolutionTS> for Solution {
 
         SolutionTS {
             rules: self.rules.iter().map(|x| x.to_mathjax()).collect(),
-            variables: self.variables.iter().map(|x| format!("t_{}", x)).collect(),
+            variables: self.variables.iter().map(|x| format!("t_{{{}}}", x)).collect(),
             result_remove_steps: self.result_remove_steps.iter().map(|x| (*x).clone().into()).collect(),
             result_accumulate_steps: self.result_accumulate_steps.iter().map(|x| (*x).clone().into()).collect(),
             result_substitute_steps: self.result_substitute_steps.iter().map(|x| (*x).clone().into()).collect(),
@@ -318,12 +318,12 @@ fn remove_simple_rules(
     for i in 0..rules.len() {
         if let Some((mut from, mut to)) = rules[i].is_simple() {
             if from == to {
-                let error = format!("recursive definition \\(t_{from}\\) = \\(t_{to}\\)!");
+                let error = format!("recursive definition \\(t_{{{from}}}\\) = \\(t_{{{to}}}\\)!");
                 return Err(error);
             } else if from < to {
                 std::mem::swap(&mut to, &mut from);
             }
-            let msg = format!("Replacing \\(t_{from}\\) with \\(t_{to}\\) in all rules");
+            let msg = format!("Replacing \\(t_{{{from}}}\\) with \\(t_{{{to}}}\\) in all rules");
             let rule_used = rules[i].clone();
             rules.swap_remove(i);
 
@@ -380,7 +380,7 @@ fn accumulate_constraints(
                 }));
             } else {
                 let msg = format!(
-                    "\\(impossible to combine these rules:\n{}\n{}\\)",
+                    "impossible to combine these rules: \\({}\\) and \\({}\\)",
                     rules[i].to_mathjax(), rules[j].to_mathjax()
                 );
                 return Err(msg);
@@ -395,7 +395,7 @@ fn find_goal_rule(rules: &mut Vec<RuleExpr>, goal_var: usize) -> Result<RuleExpr
     match rules.iter().find(|r| r.has_lhs(goal_var)) {
         Some(ref goal_rule) => Ok((*goal_rule).clone()),
         None => {
-            let msg = format!("could not find a constraint with \\(t_{goal_var}\\) on the left hand side");
+            let msg = format!("could not find a constraint with \\(t_{{{goal_var}}}\\) on the left hand side");
             Err(msg)
         }
     }

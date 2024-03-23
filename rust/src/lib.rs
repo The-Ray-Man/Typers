@@ -1,6 +1,8 @@
 mod utils;
 mod typers;
 
+use std::{cmp, collections::HashSet};
+
 use typers::{mathjax::MathJax, parser::{AstNode, MiniHaskellParser}, rules::RuleExpr, solver::solve_constraints, tree::{TreeTS, TypeInference}};
 
 use wasm_bindgen::prelude::*;
@@ -66,8 +68,16 @@ pub fn parse_input(input: &str) -> Parsed {
     let constraints = typ_inferenec.1;
     let constraints_str = constraints.iter().map(|(a,b)| format!("{} = {}", a.to_mathjax(), b.to_mathjax())).collect::<Vec<_>>();
 
+    let mut all_used_vars = HashSet::<usize>::new();
 
-    let mut maximum = constraints.len();
+    let mut maximum = constraints.clone().into_iter().fold(0, |mut max, (a,b)| {
+
+        let res = a.all_vars().into_iter().max();
+        max = cmp::max(max, res.unwrap_or(0));
+        let res = b.all_vars().into_iter().max();
+        max = cmp::max(max, res.unwrap_or(0));
+        max
+    }) + 1;
 
     let mut new_constraints = Vec::<RuleExpr>::new();
 

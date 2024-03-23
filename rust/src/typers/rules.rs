@@ -54,7 +54,7 @@ impl MathJax for TypeExpr {
         match self {
             TypeExpr::Function(left, right) => format!("({} \\to {})", left.to_mathjax(), right.to_mathjax()),
             TypeExpr::Tuple(left, right) => format!("({}, {})", left.to_mathjax(), right.to_mathjax()),
-            TypeExpr::Var(x) => format!("t_{}", x),
+            TypeExpr::Var(x) => format!("t_{{{}}}", x),
             TypeExpr::Bool => "Bool".to_string(),
             TypeExpr::Int => "Int".to_string(),
         }
@@ -241,7 +241,7 @@ pub struct RuleExpr {
 
 impl MathJax for RuleExpr {
     fn to_mathjax(&self) -> String {
-        format!("t_{} = {}", self.var, self.rhs.to_mathjax())
+        format!("t_{{{}}} = {}", self.var, self.rhs.to_mathjax())
     }
 }
 

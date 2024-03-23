@@ -84,7 +84,7 @@ impl MathJax for AstNode{
             AstNode::Var(var) => var.clone(),
             AstNode::Abs { var, body } => format!("\\lambda {} \\ . \\ {}", var, body.to_mathjax()),
             AstNode::App { fun, arg } => format!("({} \\ {})", fun.to_mathjax(), arg.to_mathjax()),
-            AstNode::IsZero(expr) => format!("\\mathsf{{iszero}} {}", expr.to_mathjax()),
+            AstNode::IsZero(expr) => format!("\\mathsf{{iszero}} \\ {}", expr.to_mathjax()),
             AstNode::Int(int) => int.to_string(),
             AstNode::True => "\\mathsf{{true}}".to_string(),
             AstNode::False => "\\mathsf{{false}}".to_string(),

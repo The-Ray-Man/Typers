@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TreeTS, parse_input } from 'FMFP';
-import { Center, TextInput, Stack, Title, Text, Box, Flex, Switch } from '@mantine/core';
+import { Center, TextInput, Stack, Title, Text, Box, Flex, Switch, Button } from '@mantine/core';
 import Card from './Card';
 import Error from './Error';
 import Constraints from './Constraints';
@@ -15,6 +15,11 @@ const Solver = () =>  {
 
   const [input, setInput] = useState('');
 
+  let parse = async () => {
+    const parsed = parse_input(input);
+    console.log(parsed);
+  }
+
   const parsed = parse_input(input);
 
 
@@ -26,17 +31,26 @@ const Solver = () =>  {
         <Stack pt={"xl"} pb={"xl"} justify='space-between'>
     
 
-      <TextInput placeholder='\x -> \y -> (x y)' value={input} onChange={(e) => setInput(e.currentTarget.value)} miw={600}  pt={"md"}/>
-      <Flex justify={"end"} >
+      <Box>
+
+      <TextInput placeholder='\x -> \y -> (x y)' value={input} onChange={(e) => setInput(e.currentTarget.value)} miw={600}  pt={"md"} pb={0}/>
+      <Text pt={0} c={"dimmed"}>Every expression except the lambda function and primitive types have to be in brackets</Text>
+      <Flex gap={"md"} justify={"space-around"} align={"center"}>
+        <Button variant='transparent' onClick={() => setInput("\\x -> \\y -> (x y)")}>Simple Example</Button>
+        <Button variant='transparent' onClick={() => setInput("\\x -> \\y -> if (iszero y) then (x + y) else (x * y)")}>Medium Example</Button>
+        <Button variant='transparent' onClick={() => setInput("\\x -> if ((snd x) 1) then \\y -> ((fst x) y) else \\z -> (iszero ((z +1) * 3))")}>Complex Example</Button>
+
+      {input.length > 0 && 
 
       <Switch checked={showHaskell} onChange={() => setShowHaskell(!showHaskell)} label="Show Rules" 
       labelPosition="left"/>
-      </Flex>
-
+}
+        </Flex>
+      </Box>
 
       {input.length === 0 && (<Info/>)}
 
-      {showHaskell && (<Card title='Mini-Haskell'><MiniHaskell/></Card>)}
+      {showHaskell && input.length !== 0 && (<Card title='Mini-Haskell'><MiniHaskell/></Card>)}
 
       {input.length > 0 && (
           <>
