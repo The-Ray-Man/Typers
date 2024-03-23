@@ -13,14 +13,14 @@ pub struct ResultRemoveStep {
     pub rules_removed: Vec<RuleExpr>,
 }
 
-impl Into<ResultRemoveStepTS> for ResultRemoveStep {
-    fn into(self) -> ResultRemoveStepTS {
+impl From<ResultRemoveStep> for ResultRemoveStepTS {
+    fn from(val: ResultRemoveStep) -> Self {
         ResultRemoveStepTS {
-            id: self.id,
-            rules_before: self.rules_before.iter().map(|x| x.to_mathjax()).collect(),
-            rules_after: self.rules_after.iter().map(|x| x.to_mathjax()).collect(),
-            text: self.text,
-            rules_removed: self.rules_removed.iter().map(|x| x.to_mathjax()).collect(),
+            id: val.id,
+            rules_before: val.rules_before.iter().map(|x| x.to_mathjax()).collect(),
+            rules_after: val.rules_after.iter().map(|x| x.to_mathjax()).collect(),
+            text: val.text,
+            rules_removed: val.rules_removed.iter().map(|x| x.to_mathjax()).collect(),
         }
     }
 }
@@ -45,17 +45,17 @@ pub struct ResultAccumulateStep {
     pub rules_compared: (RuleExpr, RuleExpr),
 }
 
-impl Into<ResultAccumulateStepTS> for ResultAccumulateStep {
-    fn into(self) -> ResultAccumulateStepTS {
+impl From<ResultAccumulateStep> for ResultAccumulateStepTS {
+    fn from(val: ResultAccumulateStep) -> Self {
         ResultAccumulateStepTS {
-            id: self.id,
-            rules_before: self.rules_before.iter().map(|x| x.to_mathjax()).collect(),
-            rules_after: self.rules_after.iter().map(|x| x.to_mathjax()).collect(),
-            text: self.text,
-            rules_added: self.rules_added.iter().map(|x| x.to_mathjax()).collect(),
+            id: val.id,
+            rules_before: val.rules_before.iter().map(|x| x.to_mathjax()).collect(),
+            rules_after: val.rules_after.iter().map(|x| x.to_mathjax()).collect(),
+            text: val.text,
+            rules_added: val.rules_added.iter().map(|x| x.to_mathjax()).collect(),
             rules_compared: vec![
-                self.rules_compared.0.to_mathjax(),
-                self.rules_compared.1.to_mathjax(),
+                val.rules_compared.0.to_mathjax(),
+                val.rules_compared.1.to_mathjax(),
             ],
         }
     }
@@ -82,20 +82,20 @@ pub struct ResultSubstituteStep {
     pub text: Option<String>,
 }
 
-impl Into<ResultSubstituteStepTS> for ResultSubstituteStep {
-    fn into(self) -> ResultSubstituteStepTS {
+impl From<ResultSubstituteStep> for ResultSubstituteStepTS {
+    fn from(val: ResultSubstituteStep) -> Self {
         ResultSubstituteStepTS {
-            id: self.id,
-            goal_id: self.goal_id,
-            rules_available: self
+            id: val.id,
+            goal_id: val.goal_id,
+            rules_available: val
                 .rules_available
                 .iter()
                 .map(|x| x.to_mathjax())
                 .collect(),
-            rule_goal_before: self.rule_goal_before.to_mathjax(),
-            rule_goal_after: self.rule_goal_after.to_mathjax(),
-            rule_used: self.rule_used.to_mathjax(),
-            text: self.text,
+            rule_goal_before: val.rule_goal_before.to_mathjax(),
+            rule_goal_after: val.rule_goal_after.to_mathjax(),
+            rule_used: val.rule_used.to_mathjax(),
+            text: val.text,
         }
     }
 }
@@ -133,38 +133,38 @@ pub struct SolutionTS {
     pub result: Option<String>,
 }
 
-impl Into<SolutionTS> for Solution {
-    fn into(self) -> SolutionTS {
-        let result_error = match self.result.clone() {
-            Some(Ok(rule)) => None,
+impl From<Solution> for SolutionTS {
+    fn from(val: Solution) -> Self {
+        let result_error = match val.result.clone() {
+            Some(Ok(_rule)) => None,
             Some(Err(e)) => Some(e.clone()),
             None => None,
         };
 
-        let result = match self.result.clone() {
+        let result = match val.result.clone() {
             Some(Ok(rule)) => Some(rule.clone().to_mathjax()),
-            Some(Err(e)) => None,
+            Some(Err(_e)) => None,
             None => None,
         };
 
         SolutionTS {
-            rules: self.rules.iter().map(|x| x.to_mathjax()).collect(),
-            variables: self
+            rules: val.rules.iter().map(|x| x.to_mathjax()).collect(),
+            variables: val
                 .variables
                 .iter()
                 .map(|x| format!("t_{{{}}}", x))
                 .collect(),
-            result_remove_steps: self
+            result_remove_steps: val
                 .result_remove_steps
                 .iter()
                 .map(|x| (*x).clone().into())
                 .collect(),
-            result_accumulate_steps: self
+            result_accumulate_steps: val
                 .result_accumulate_steps
                 .iter()
                 .map(|x| (*x).clone().into())
                 .collect(),
-            result_substitute_steps: self
+            result_substitute_steps: val
                 .result_substitute_steps
                 .iter()
                 .map(|x| (*x).clone().into())
@@ -183,8 +183,8 @@ pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution 
     let variables = variables(rules.clone());
     solution.variables = variables.clone();
 
-    let mut accumulate_steps = Vec::<ResultAccumulateStep>::new();
-    let mut remove_steps = Vec::<ResultRemoveStep>::new();
+    let _accumulate_steps = Vec::<ResultAccumulateStep>::new();
+    let _remove_steps = Vec::<ResultRemoveStep>::new();
     let mut counter = 0;
 
     println!("1");
@@ -234,9 +234,9 @@ pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution 
         }
     }
 
-    let mut substitute_steps = Vec::<ResultSubstituteStep>::new();
+    let _substitute_steps = Vec::<ResultSubstituteStep>::new();
     println!("substitute");
-    let mut goal_rule = find_goal_rule(&mut rules, goal_var);
+    let goal_rule = find_goal_rule(&mut rules, goal_var);
 
     let mut goal_rule = match goal_rule {
         Ok(rule) => rule,
@@ -317,8 +317,7 @@ fn check_cycles(rules: &Vec<RuleExpr>) -> Result<(), String> {
 fn variables(rules: Vec<RuleExpr>) -> Vec<usize> {
     let all_vars: HashSet<usize> = rules
         .all_vars_lhs()
-        .union(&rules.all_vars_rhs())
-        .map(|x| *x)
+        .union(&rules.all_vars_rhs()).copied()
         .collect();
     let mut all_vars_vec: Vec<usize> = all_vars.clone().into_iter().collect();
     all_vars_vec.sort();
@@ -357,7 +356,7 @@ fn remove_simple_rules(
             }));
         }
     }
-    return Ok(None);
+    Ok(None)
 }
 
 /// Accumulate constraints by comparing rules with the same left hand side and replacing variables which are equal
@@ -368,7 +367,7 @@ fn accumulate_constraints(
     // Compare rules greedily to get new constraints
 
     // Iterate over rules to find two matching ones
-    let mut found_new = false;
+    let _found_new = false;
     let rules_before = rules.clone();
     'outer: for i in 0..rules.len() {
         for j in i + 1..rules.len() {
@@ -411,7 +410,7 @@ fn accumulate_constraints(
 /// Find rule for goal variable
 fn find_goal_rule(rules: &mut Vec<RuleExpr>, goal_var: usize) -> Result<RuleExpr, String> {
     match rules.iter().find(|r| r.has_lhs(goal_var)) {
-        Some(ref goal_rule) => Ok((*goal_rule).clone()),
+        Some(goal_rule) => Ok(goal_rule.clone()),
         None => {
             let msg = format!(
                 "could not find a constraint with \\(t_{{{goal_var}}}\\) on the left hand side"
@@ -428,19 +427,19 @@ fn substitute_constraints(
     goal_var: usize,
     counter: i32,
 ) -> Result<Option<ResultSubstituteStep>, String> {
-    let old_goal_rule = goal_rule.clone();
+    let _old_goal_rule = goal_rule.clone();
     // Substitute constraints one by one
     let rule_goal_before = goal_rule.clone();
     let rules_before = rules.clone();
-    if let Some(rule) = goal_rule.substitute_constraint(&rules) {
+    if let Some(rule) = goal_rule.substitute_constraint(rules) {
         let rule_goal_after = goal_rule.clone();
 
         return Ok(Some(ResultSubstituteStep {
             id: counter,
             goal_id: goal_var,
             rules_available: rules_before,
-            rule_goal_before: rule_goal_before,
-            rule_goal_after: rule_goal_after,
+            rule_goal_before,
+            rule_goal_after,
             rule_used: rule.clone(),
             text: None,
         }));

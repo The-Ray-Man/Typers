@@ -31,7 +31,7 @@ impl Display for Tree {
         let constraints = self
             .constraints
             .iter()
-            .map(|(a)| format!("{}", a))
+            .map(|a| format!("{}", a))
             .collect::<Vec<String>>()
             .join("\n");
         write!(
@@ -45,16 +45,16 @@ impl Display for Tree {
     }
 }
 
-impl Into<TreeTS> for Tree {
-    fn into(self) -> TreeTS {
-        let gamma = self
+impl From<Tree> for TreeTS {
+    fn from(val: Tree) -> Self {
+        let gamma = val
             .gamma
             .iter()
             .map(|(k, v)| format!("{}: {}", k, v.to_mathjax()))
             .collect::<Vec<String>>()
             .join(", ");
-        let expr = format!("{} :: {}", self.expr.0, self.expr.1);
-        let constraints = self
+        let expr = format!("{} :: {}", val.expr.0, val.expr.1);
+        let constraints = val
             .constraints
             .into_iter()
             .map(|a| a.into())
@@ -133,20 +133,20 @@ impl TypeInference {
     ) -> Result<Tree, String> {
         let my_ast = ast.clone();
         match my_ast {
-            AstNode::Var(var) => Ok(self.build_var(ast, gamma, t)?),
-            AstNode::Abs { var, body } => Ok(self.build_abs(ast, gamma, t)?),
-            AstNode::App { fun, arg } => Ok(self.build_app(ast, gamma, t)?),
-            AstNode::IsZero(expr) => Ok(self.build_zero(ast, gamma, t)?),
-            AstNode::Int(int) => Ok(self.build_int(ast, gamma, t)?),
+            AstNode::Var(_var) => Ok(self.build_var(ast, gamma, t)?),
+            AstNode::Abs { var: _, body: _ } => Ok(self.build_abs(ast, gamma, t)?),
+            AstNode::App { fun: _, arg: _ } => Ok(self.build_app(ast, gamma, t)?),
+            AstNode::IsZero(_expr) => Ok(self.build_zero(ast, gamma, t)?),
+            AstNode::Int(_int) => Ok(self.build_int(ast, gamma, t)?),
             AstNode::True => Ok(self.build_bool(ast, gamma, t)?),
             AstNode::False => Ok(self.build_bool(ast, gamma, t)?),
-            AstNode::Binop { lhs, op, rhs } => Ok(self.build_binop(ast, gamma, t)?),
-            AstNode::IfThenElse { cond, then, else_ } => {
+            AstNode::Binop { lhs: _, op: _, rhs: _ } => Ok(self.build_binop(ast, gamma, t)?),
+            AstNode::IfThenElse { cond: _, then: _, else_: _ } => {
                 Ok(self.build_if_then_else(ast, gamma, t)?)
             }
-            AstNode::Tuple { fst, snd } => Ok(self.build_tuple(ast, gamma, t)?),
-            AstNode::Fst(expr) => Ok(self.build_fst(ast, gamma, t)?),
-            AstNode::Snd(expr) => Ok(self.build_snd(ast, gamma, t)?),
+            AstNode::Tuple { fst: _, snd: _ } => Ok(self.build_tuple(ast, gamma, t)?),
+            AstNode::Fst(_expr) => Ok(self.build_fst(ast, gamma, t)?),
+            AstNode::Snd(_expr) => Ok(self.build_snd(ast, gamma, t)?),
         }
     }
 
@@ -162,7 +162,7 @@ impl TypeInference {
                 let type_var = gamma
                     .get(&var.to_string())
                     .ok_or(format!("{} not found!", var).to_string())?;
-                self.add_constraint(&type_var, &t);
+                self.add_constraint(type_var, &t);
                 let tree = Tree {
                     gamma,
                     expr: (ast, t),
@@ -297,7 +297,7 @@ impl TypeInference {
         t: TypeExpr,
     ) -> Result<Tree, String> {
         match ast.clone() {
-            AstNode::Binop { lhs, op, rhs } => {
+            AstNode::Binop { lhs, op: _, rhs } => {
                 self.add_constraint(&t, &TypeExpr::Int);
                 let lhs = self.build_tree(*lhs, gamma.clone(), TypeExpr::Int)?;
                 let rhs = self.build_tree(*rhs, gamma.clone(), TypeExpr::Int)?;

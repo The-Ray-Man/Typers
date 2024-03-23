@@ -5,13 +5,13 @@ use std::{cmp, collections::HashSet};
 
 use typers::{
     mathjax::MathJax,
-    parser::{AstNode, MiniHaskellParser},
+    parser::{MiniHaskellParser},
     rules::RuleExpr,
     solver::solve_constraints,
-    tree::{TreeTS, TypeInference},
+    tree::{TypeInference},
 };
 
-use tsify::Tsify;
+
 use typers::rules::TypeExpr;
 use typers::solver::SolutionTS;
 use wasm_bindgen::prelude::*;
@@ -76,7 +76,7 @@ pub fn parse_input(input: &str) -> Parsed {
         .map(|(a, b)| format!("{} = {}", a.to_mathjax(), b.to_mathjax()))
         .collect::<Vec<_>>();
 
-    let mut all_used_vars = HashSet::<usize>::new();
+    let _all_used_vars = HashSet::<usize>::new();
 
     let mut maximum = constraints.clone().into_iter().fold(0, |mut max, (a, b)| {
         let res = a.all_vars().into_iter().max();
@@ -92,13 +92,13 @@ pub fn parse_input(input: &str) -> Parsed {
         match (a, b) {
             (TypeExpr::Var(x), b) => {
                 new_constraints.push(RuleExpr {
-                    var: x.clone(),
+                    var: x,
                     rhs: Box::new(b.clone()),
                 });
             }
             (a, TypeExpr::Var(x)) => {
                 new_constraints.push(RuleExpr {
-                    var: x.clone(),
+                    var: x,
                     rhs: Box::new(a.clone()),
                 });
             }
