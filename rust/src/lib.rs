@@ -1,11 +1,12 @@
 mod utils;
 mod typers;
 
-use typers::{mathjax::MathJax, parser::{AstNode, MiniHaskellParser}, tree::{TreeTS, TypeInference}};
+use typers::{mathjax::MathJax, parser::{AstNode, MiniHaskellParser}, rules::RuleExpr, solver::solve_constraints, tree::{TreeTS, TypeInference}};
 
 use wasm_bindgen::prelude::*;
 use typers::rules::TypeExpr;
 use tsify::Tsify;
+use typers::solver::SolutionTS;
 
 // #[wasm_bindgen]
 
@@ -19,7 +20,7 @@ pub struct Parsed {
     pub constraints_error : Option<String>,
     pub constraints: Option<Vec<String>>,
     pub solution_error: Option<String>,
-    pub solution: Option<Vec<String>>
+    pub solution: Option<SolutionTS>
 }
 
 
@@ -55,7 +56,7 @@ pub fn parse_input(input: &str) -> Parsed {
     let typ_inferenec = match typ_inferenec {
         Ok(typ_inferenec) => typ_inferenec,
         Err(e) => return Parsed {
-            tree: Some(ast.to_mathjax()),
+            // tree: Some(ast.to_mathjax()),
             constraints_error: Some(e.to_string()),
             ..Default::default()
         }
@@ -65,10 +66,52 @@ pub fn parse_input(input: &str) -> Parsed {
     let constraints = typ_inferenec.1;
     let constraints_str = constraints.iter().map(|(a,b)| format!("{} = {}", a.to_mathjax(), b.to_mathjax())).collect::<Vec<_>>();
 
+
+    let mut maximum = constraints.len();
+
+    let mut new_constraints = Vec::<RuleExpr>::new();
+
+    for (a,b) in constraints {
+        match (a,b) {
+            (TypeExpr::Var(x), b) => {
+                new_constraints.push(RuleExpr {
+                    var: x.clone(),
+                    rhs: Box::new(b.clone())
+                });
+            },
+            (a, TypeExpr::Var(x)) => {
+                new_constraints.push(RuleExpr {
+                    var: x.clone(),
+                    rhs: Box::new(a.clone())
+                });
+            },
+            (a, b) => {
+                new_constraints.push(RuleExpr {
+                    var: maximum,
+                    rhs: Box::new(a.clone())
+                });
+                new_constraints.push(RuleExpr {
+                    var: maximum,
+                    rhs: Box::new(b.clone())
+                });
+                maximum += 1;
+            }
+        }
+    }
+
+    let debug_string = new_constraints.iter().map(|a| format!("{} ",a)).collect::<Vec<_>>();
+    println!("{}",debug_string.join("\n"));
+    // panic!();
+
+
+    let solution = solve_constraints(new_constraints, 0);
+
     Parsed {
         tree: Some(tree.to_mathjax()),
         constraints: Some(constraints_str),
+        solution: Some(solution.into()),
         ..Default::default()
     }
 
 }
+

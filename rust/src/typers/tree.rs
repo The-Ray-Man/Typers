@@ -31,7 +31,7 @@ impl Display for Tree {
 
 impl Into<TreeTS> for Tree {
     fn into(self) -> TreeTS {
-        let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<String>>().join(", ");
+        let gamma = self.gamma.iter().map(|(k, v)| format!("{}: {}", k, v.to_mathjax())).collect::<Vec<String>>().join(", ");
         let expr = format!("{} :: {}", self.expr.0, self.expr.1);
         let constraints = self.constraints.into_iter().map(|a| a.into()).collect::<Vec<TreeTS>>();
         TreeTS {
