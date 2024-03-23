@@ -1,11 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import init from 'FMFP';
-import '@mantine/core/styles.css';
-import { createTheme, MantineProvider } from '@mantine/core';
-import { MathJaxContext } from 'better-react-mathjax';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import init from "FMFP";
+import "@mantine/core/styles.css";
+import { createTheme, MantineProvider } from "@mantine/core";
+import { MathJaxContext } from "better-react-mathjax";
 
 const theme = createTheme({
   /** Put your mantine theme override here */
@@ -13,21 +13,20 @@ const theme = createTheme({
 
 init().then(() => {
   const root = ReactDOM.createRoot(
-    document.getElementById('root') as HTMLElement
+    document.getElementById("root") as HTMLElement,
   );
   root.render(
     <React.StrictMode>
       <MathJaxContext>
-
-      <MantineProvider theme={theme}>
-      <App />
-      </MantineProvider>
+        <MantineProvider theme={theme}>
+          <App />
+        </MantineProvider>
       </MathJaxContext>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 
   // If you want to start measuring performance in your app, pass a function
   // to log results (for example: reportWebVitals(console.log))
   // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
   reportWebVitals();
-})
+});

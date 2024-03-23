@@ -7,14 +7,12 @@ type SolutionProps = {
   solution: string;
 };
 
-const Solution = ({solution} : SolutionProps) => {
-    return (
-        <Card title="Solution">
-            <MathJax>
-                {"\\(" + solution +"\\)"}
-       </MathJax>
-        </Card>
-    );
-    }
+const Solution = ({ solution }: SolutionProps) => {
+  return (
+    <Card title="Solution">
+      <MathJax>{"\\(" + solution + "\\)"}</MathJax>
+    </Card>
+  );
+};
 
 export default Solution;
