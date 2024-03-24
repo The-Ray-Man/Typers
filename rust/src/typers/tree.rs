@@ -4,6 +4,8 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::typers::{mathjax::MathJax, parser::AstNode, rules::TypeExpr};
 
+use super::parser::BinOp;
+
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Debug, Clone)]
 pub struct TreeTS {
@@ -67,35 +69,6 @@ impl From<Tree> for TreeTS {
     }
 }
 
-impl MathJax for Tree {
-    fn to_mathjax(&self) -> String {
-        let gamma = self
-            .gamma
-            .iter()
-            .map(|(k, v)| format!("{}: {}", k, v.to_mathjax()))
-            .collect::<Vec<String>>()
-            .join(", ");
-        let expr = format!(
-            "{} :: {}",
-            self.expr.0.to_mathjax(),
-            self.expr.1.to_mathjax()
-        );
-        let constraints = self
-            .constraints
-            .iter()
-            .map(|a| a.to_mathjax())
-            .collect::<Vec<String>>()
-            .join("\\qquad");
-        format!(
-            "\\dfrac{{{}}} {{{} \\vdash {}}} \\textsf{{{}}}",
-            constraints,
-            gamma,
-            expr,
-            self.expr.0.current_rule_str()
-        )
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TypeInference {
     typ_num: usize,
@@ -103,6 +76,7 @@ pub struct TypeInference {
 }
 
 impl TypeInference {
+    // Transform an AST into a tree and a list of constraints.
     pub fn new(ast: AstNode) -> Result<(Tree, Vec<(TypeExpr, TypeExpr)>), String> {
         let gamma = HashMap::new();
         let constraints = Vec::<(TypeExpr, TypeExpr)>::new();
@@ -114,17 +88,19 @@ impl TypeInference {
         let res = type_inference.build_tree(ast, gamma, start_t)?;
         Ok((res, type_inference.constraints))
     }
-
+    // gives a new type variable with a fresh number.
     pub fn new_typ(&mut self) -> TypeExpr {
         let t = TypeExpr::Var(self.typ_num);
         self.typ_num += 1;
         t
     }
 
+    // Add the constraint a = b to the constraint list.
     pub fn add_constraint(&mut self, a: &TypeExpr, b: &TypeExpr) {
         self.constraints.push((a.clone(), b.clone()));
     }
 
+    // Build a tree with types from an AST. It collects the type constraints.
     pub fn build_tree(
         &mut self,
         ast: AstNode,
@@ -133,288 +109,296 @@ impl TypeInference {
     ) -> Result<Tree, String> {
         let my_ast = ast.clone();
         match my_ast {
-            AstNode::Var(_var) => Ok(self.build_var(ast, gamma, t)?),
-            AstNode::Abs { var: _, body: _ } => Ok(self.build_abs(ast, gamma, t)?),
-            AstNode::App { fun: _, arg: _ } => Ok(self.build_app(ast, gamma, t)?),
+            AstNode::Var(var) => Ok(self.build_var(var, gamma, t)?),
+            AstNode::Abs { var, body } => Ok(self.build_abs(var, *body, gamma, t)?),
+            AstNode::App { fun, arg } => Ok(self.build_app(*fun, *arg, gamma, t)?),
             AstNode::IsZero(_expr) => Ok(self.build_zero(ast, gamma, t)?),
-            AstNode::Int(_int) => Ok(self.build_int(ast, gamma, t)?),
-            AstNode::True => Ok(self.build_bool(ast, gamma, t)?),
-            AstNode::False => Ok(self.build_bool(ast, gamma, t)?),
-            AstNode::Binop { lhs: _, op: _, rhs: _ } => Ok(self.build_binop(ast, gamma, t)?),
-            AstNode::IfThenElse { cond: _, then: _, else_: _ } => {
-                Ok(self.build_if_then_else(ast, gamma, t)?)
+            AstNode::Int(num) => Ok(self.build_int(num, gamma, t)?),
+            AstNode::True => Ok(self.build_bool(true, gamma, t)?),
+            AstNode::False => Ok(self.build_bool(false, gamma, t)?),
+            AstNode::Binop { lhs, op, rhs } => Ok(self.build_binop(*lhs, op, *rhs, gamma, t)?),
+            AstNode::IfThenElse { cond, then, else_ } => {
+                Ok(self.build_if_then_else(*cond, *then, *else_, gamma, t)?)
             }
-            AstNode::Tuple { fst: _, snd: _ } => Ok(self.build_tuple(ast, gamma, t)?),
-            AstNode::Fst(_expr) => Ok(self.build_fst(ast, gamma, t)?),
-            AstNode::Snd(_expr) => Ok(self.build_snd(ast, gamma, t)?),
+            AstNode::Tuple { fst, snd } => Ok(self.build_tuple(*fst, *snd, gamma, t)?),
+            AstNode::Fst(expr) => Ok(self.build_fst(*expr, gamma, t)?),
+            AstNode::Snd(expr) => Ok(self.build_snd(*expr, gamma, t)?),
         }
     }
 
+    // Build a tree, starting from a variable rule.
     fn build_var(
         &mut self,
-        ast: AstNode,
+        var: String,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Var(var) => {
-                dbg!(&var);
-                let type_var = gamma
-                    .get(&var.to_string())
-                    .ok_or(format!("{} not found!", var).to_string())?;
-                self.add_constraint(type_var, &t);
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected a variable"),
-        }
+        // Check if the variable is in the gamma. If it is not, the tree is invalid and a error is returned.
+        let type_var = gamma
+            .get(&var.to_string())
+            .ok_or(format!("{} not found!", var).to_string())?;
+
+        self.add_constraint(type_var, &t);
+
+        Ok(Tree {
+            gamma,
+            expr: (AstNode::Var(var), t),
+            constraints: Vec::<Tree>::new(),
+        })
     }
+
+    // Build a tree, starting from an abstraction rule.
     fn build_abs(
         &mut self,
-        ast: AstNode,
+        var: String,
+        body: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Abs { var, body } => {
-                if let TypeExpr::Function(sigma, tau) = t.clone() {
-                    let mut new_gamma = gamma.clone();
-                    new_gamma.insert(var, *sigma);
-                    let body = self.build_tree(*body, new_gamma, *tau)?;
-                    let tree = Tree {
-                        gamma,
-                        expr: (ast, t),
-                        constraints: vec![body],
-                    };
-                    Ok(tree)
-                } else {
-                    let sigma = self.new_typ();
-                    let tau = self.new_typ();
-                    let new_t = TypeExpr::Function(Box::new(sigma.clone()), Box::new(tau.clone()));
-                    self.add_constraint(&t, &new_t);
-                    let mut new_gamma = gamma.clone();
-                    new_gamma.insert(var, sigma);
-                    let body = self.build_tree(*body, new_gamma, tau)?;
-                    let tree = Tree {
-                        gamma,
-                        expr: (ast, t),
-                        constraints: vec![body],
-                    };
-                    Ok(tree)
-                }
-            }
-            _ => panic!("Expected an abstraction"),
+        // Check if the type of the expression has already the function form.
+        if let TypeExpr::Function(sigma, tau) = t.clone() {
+            let mut new_gamma = gamma.clone();
+            new_gamma.insert(var.clone(), *sigma);
+            let body_tree = self.build_tree(body.clone(), new_gamma, *tau)?;
+            Ok(Tree {
+                gamma,
+                expr: (
+                    AstNode::Abs {
+                        var,
+                        body: Box::new(body),
+                    },
+                    t,
+                ),
+                constraints: vec![body_tree],
+            })
+        } else {
+            // The type of the expression is not a function, so we need to create a new function type and add a constraint.
+            let sigma = self.new_typ();
+            let tau = self.new_typ();
+            let new_t = TypeExpr::Function(Box::new(sigma.clone()), Box::new(tau.clone()));
+            self.add_constraint(&t, &new_t);
+            let mut new_gamma = gamma.clone();
+            new_gamma.insert(var.clone(), sigma);
+            let body_tree = self.build_tree(body.clone(), new_gamma, tau)?;
+            Ok(Tree {
+                gamma,
+                expr: (
+                    AstNode::Abs {
+                        var,
+                        body: Box::new(body),
+                    },
+                    t,
+                ),
+                constraints: vec![body_tree],
+            })
         }
     }
+    // Build a tree, starting from an application rule.
     fn build_app(
         &mut self,
-        ast: AstNode,
+        fun: AstNode,
+        arg: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::App { fun, arg } => {
-                let sigma = self.new_typ();
-                let new_t = TypeExpr::Function(Box::new(sigma.clone()), Box::new(t.clone()));
-                let fun = self.build_tree(*fun, gamma.clone(), new_t)?;
-                let arg = self.build_tree(*arg, gamma.clone(), sigma.clone())?;
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![fun, arg],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected an application"),
-        }
+        let sigma = self.new_typ();
+        let new_t = TypeExpr::Function(Box::new(sigma.clone()), Box::new(t.clone()));
+        let fun_tree = self.build_tree(fun.clone(), gamma.clone(), new_t)?;
+        let arg_tree = self.build_tree(arg.clone(), gamma.clone(), sigma.clone())?;
+        Ok(Tree {
+            gamma,
+            expr: (
+                AstNode::App {
+                    fun: Box::new(fun),
+                    arg: Box::new(arg),
+                },
+                t,
+            ),
+            constraints: vec![fun_tree, arg_tree],
+        })
     }
+
+    // Build a tree, starting from an iszero rule.
     fn build_zero(
         &mut self,
-        ast: AstNode,
+        expr: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::IsZero(expr) => {
-                let expr = self.build_tree(*expr, gamma.clone(), TypeExpr::Int)?;
-                self.add_constraint(&t, &TypeExpr::Bool);
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, TypeExpr::Bool),
-                    constraints: vec![expr],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected an iszero expression"),
-        }
+        let expr_tree = self.build_tree(expr.clone(), gamma.clone(), TypeExpr::Int)?;
+        self.add_constraint(&t, &TypeExpr::Bool);
+        Ok(Tree {
+            gamma,
+            expr: (AstNode::IsZero(Box::new(expr)), TypeExpr::Bool),
+            constraints: vec![expr_tree],
+        })
     }
+    // Build a tree, starting from an integer rule.
     fn build_int(
         &mut self,
-        ast: AstNode,
+        num: i32,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast {
-            AstNode::Int(_) => {
-                self.add_constraint(&t, &TypeExpr::Int);
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected an integer"),
-        }
+        self.add_constraint(&t, &TypeExpr::Int);
+        Ok(Tree {
+            gamma,
+            expr: (AstNode::Int(num), t),
+            constraints: vec![],
+        })
     }
+    // Build a tree, starting from a boolean rule.
     fn build_bool(
         &mut self,
-        ast: AstNode,
+        value: bool,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast {
-            AstNode::True | AstNode::False => {
-                self.add_constraint(&t, &TypeExpr::Bool);
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected a boolean"),
-        }
+        self.add_constraint(&t, &TypeExpr::Bool);
+        Ok(Tree {
+            gamma,
+            expr: (if value { AstNode::True } else { AstNode::False }, t),
+            constraints: vec![],
+        })
     }
+
+    // Build a tree, starting from a binary operation rule.
     fn build_binop(
         &mut self,
-        ast: AstNode,
+        lhs: AstNode,
+        op: BinOp,
+        rhs: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Binop { lhs, op: _, rhs } => {
-                self.add_constraint(&t, &TypeExpr::Int);
-                let lhs = self.build_tree(*lhs, gamma.clone(), TypeExpr::Int)?;
-                let rhs = self.build_tree(*rhs, gamma.clone(), TypeExpr::Int)?;
+        self.add_constraint(&t, &TypeExpr::Int);
+        let lhs_tree = self.build_tree(lhs.clone(), gamma.clone(), TypeExpr::Int)?;
+        let rhs_tree = self.build_tree(rhs.clone(), gamma.clone(), TypeExpr::Int)?;
 
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![lhs, rhs],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected a binary operation"),
-        }
+        Ok(Tree {
+            gamma,
+            expr: (
+                AstNode::Binop {
+                    op,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                },
+                t,
+            ),
+            constraints: vec![lhs_tree, rhs_tree],
+        })
     }
+
+    // Build a tree, starting from an if-then-else rule.
     fn build_if_then_else(
         &mut self,
-        ast: AstNode,
+        cond: AstNode,
+        then: AstNode,
+        else_: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::IfThenElse { cond, then, else_ } => {
-                let cond = self.build_tree(*cond, gamma.clone(), TypeExpr::Bool)?;
-                let then = self.build_tree(*then, gamma.clone(), t.clone())?;
-                let else_ = self.build_tree(*else_, gamma.clone(), t.clone())?;
+        let cond_tree = self.build_tree(cond.clone(), gamma.clone(), TypeExpr::Bool)?;
+        let then_tree = self.build_tree(then.clone(), gamma.clone(), t.clone())?;
+        let else_tree = self.build_tree(else_.clone(), gamma.clone(), t.clone())?;
 
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![cond, then, else_],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected an if-then-else expression"),
-        }
+        Ok(Tree {
+            gamma,
+            expr: (
+                AstNode::IfThenElse {
+                    cond: Box::new(cond),
+                    then: Box::new(then),
+                    else_: Box::new(else_),
+                },
+                t,
+            ),
+            constraints: vec![cond_tree, then_tree, else_tree],
+        })
     }
+
+    // Build a tree, starting from a tuple rule.
     fn build_tuple(
         &mut self,
-        ast: AstNode,
+        fst: AstNode,
+        snd: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Tuple { fst, snd } => {
-                if let TypeExpr::Tuple(a, b) = t.clone() {
-                    let fst = self.build_tree(*fst, gamma.clone(), *a)?;
-                    let snd = self.build_tree(*snd, gamma.clone(), *b)?;
+        // Check if the type of the expression has already the tuple form.
+        if let TypeExpr::Tuple(a, b) = t.clone() {
+            let fst_tree = self.build_tree(fst.clone(), gamma.clone(), *a)?;
+            let snd_tree = self.build_tree(snd.clone(), gamma.clone(), *b)?;
 
-                    let tree = Tree {
-                        gamma,
-                        expr: (ast, t),
-                        constraints: vec![fst, snd],
-                    };
-                    Ok(tree)
-                } else {
-                    let a = self.new_typ();
-                    let b = self.new_typ();
-                    let new_t = TypeExpr::Tuple(Box::new(a.clone()), Box::new(b.clone()));
-                    self.add_constraint(&t, &new_t.clone());
-                    let fst = self.build_tree(*fst, gamma.clone(), a)?;
-                    let snd = self.build_tree(*snd, gamma.clone(), b)?;
+            Ok(Tree {
+                gamma,
+                expr: (
+                    AstNode::Tuple {
+                        fst: Box::new(fst),
+                        snd: Box::new(snd),
+                    },
+                    t,
+                ),
+                constraints: vec![fst_tree, snd_tree],
+            })
+        } else {
+            // The type of the expression is not a tuple, so we need to create a new tuple type and add a constraint.
+            let a = self.new_typ();
+            let b = self.new_typ();
+            let new_t = TypeExpr::Tuple(Box::new(a.clone()), Box::new(b.clone()));
+            self.add_constraint(&t, &new_t.clone());
+            let fst_tree = self.build_tree(fst.clone(), gamma.clone(), a)?;
+            let snd_tree = self.build_tree(snd.clone(), gamma.clone(), b)?;
 
-                    let tree = Tree {
-                        gamma,
-                        expr: (ast, new_t),
-                        constraints: vec![fst, snd],
-                    };
-                    Ok(tree)
-                }
-            }
-            _ => panic!("Expected a tuple"),
+            Ok(Tree {
+                gamma,
+                expr: (
+                    AstNode::Tuple {
+                        fst: Box::new(fst),
+                        snd: Box::new(snd),
+                    },
+                    new_t,
+                ),
+                constraints: vec![fst_tree, snd_tree],
+            })
         }
     }
+
+    // Build a tree, starting from a first projection rule.
     fn build_fst(
         &mut self,
-        ast: AstNode,
+        expr: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Fst(expr) => {
-                let b = self.new_typ();
-                let new_t = TypeExpr::Tuple(Box::new(t.clone()), Box::new(b));
+        let b = self.new_typ();
+        let new_t = TypeExpr::Tuple(Box::new(t.clone()), Box::new(b));
 
-                let expr = self.build_tree(*expr, gamma.clone(), new_t)?;
+        let expr_tree = self.build_tree(expr.clone(), gamma.clone(), new_t)?;
 
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![expr],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected a first projection"),
-        }
+        Ok(Tree {
+            gamma,
+            expr: (AstNode::Fst(Box::new(expr)), t),
+            constraints: vec![expr_tree],
+        })
     }
+
+    // Build a tree, starting from a second projection rule.
     fn build_snd(
         &mut self,
-        ast: AstNode,
+        expr: AstNode,
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
-        match ast.clone() {
-            AstNode::Snd(expr) => {
-                let a = self.new_typ();
-                let new_t = TypeExpr::Tuple(Box::new(a), Box::new(t.clone()));
+        let a = self.new_typ();
+        let new_t = TypeExpr::Tuple(Box::new(a), Box::new(t.clone()));
 
-                let expr = self.build_tree(*expr, gamma.clone(), new_t)?;
+        let expr_tree = self.build_tree(expr.clone(), gamma.clone(), new_t)?;
 
-                let tree = Tree {
-                    gamma,
-                    expr: (ast, t),
-                    constraints: vec![expr],
-                };
-                Ok(tree)
-            }
-            _ => panic!("Expected a second projection"),
-        }
+        let tree = Tree {
+            gamma,
+            expr: (AstNode::Snd(Box::new(expr)), t),
+            constraints: vec![expr_tree],
+        };
+        Ok(tree)
     }
 }
