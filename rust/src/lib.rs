@@ -1,7 +1,7 @@
 mod typers;
 mod utils;
 
-use std::{cmp, collections::HashSet};
+use std::{cmp};
 
 use typers::{
     parser::MiniHaskellParser, rules::RuleExpr, solver::solve_constraints, tree::TypeInference,
@@ -127,7 +127,7 @@ pub fn solve(input: &str) -> Parsed {
     let solution = solve_constraints(new_constraints, 0);
 
     result.solution = Some(solution.into());
-    return result;
+    result
 }
 
 fn get_max_var(constraints: Vec<(TypeExpr, TypeExpr)>) -> usize {

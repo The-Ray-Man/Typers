@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::typers::{
-    rules::RuleExpr,
     solver::{ResultAccumulateStep, ResultRemoveStep, ResultSubstituteStep, Solution},
 };
 

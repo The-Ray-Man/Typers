@@ -60,9 +60,9 @@ impl Display for Tree {
     }
 }
 
-impl Into<String> for AstNode {
-    fn into(self) -> String {
-        let res = match self {
+impl From<AstNode> for String {
+    fn from(val: AstNode) -> Self {
+        let res = match val {
             AstNode::Var(_) => "Var",
             AstNode::Abs { .. } => "Abs",
             AstNode::App { .. } => "App",

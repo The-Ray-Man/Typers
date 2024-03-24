@@ -1,7 +1,7 @@
 use crate::{rule, var};
-use std::{collections::HashSet, fmt::Display};
+use std::{collections::HashSet};
 
-use super::utils::mathjax::MathJax;
+
 
 /// Utility trait to implement these functions for `Vec<RuleExpr>`
 pub trait RuleInfo {

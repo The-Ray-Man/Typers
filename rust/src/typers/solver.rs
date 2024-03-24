@@ -1,6 +1,6 @@
 use crate::typers::rules::{RuleExpr, RuleInfo};
 use std::collections::{HashMap, HashSet, VecDeque};
-use wasm_bindgen::prelude::*;
+
 
 use super::utils::mathjax::MathJax;
 

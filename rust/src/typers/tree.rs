@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
