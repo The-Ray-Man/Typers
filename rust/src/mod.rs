@@ -1,4 +1,3 @@
-pub mod typst;
+pub mod typers;
 pub mod lib;
-pub mod utils;
 pub mod main;

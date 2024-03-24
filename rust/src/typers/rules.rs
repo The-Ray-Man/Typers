@@ -156,13 +156,11 @@ impl TypeExpr {
                 TypeExpr::Var(c) => {
                     // we only want rules where left variable ID is smaller than variable ID
                     // they will be replaced afterwards
-                    if x < c {
-                        Ok(vec![rule!(*x, var!(*c))])
-                    } else if c < x {
-                        Ok(vec![rule!(*c, var!(*x))])
-                    } else {
-                        // c == x and no rule needs to be inserted
-                        Ok(vec![])
+
+                    match x.cmp(c) {
+                        std::cmp::Ordering::Less => Ok(vec![rule!(*x, var!(*c))]),
+                        std::cmp::Ordering::Greater => Ok(vec![rule!(*c, var!(*x))]),
+                        std::cmp::Ordering::Equal => Ok(vec![])
                     }
                 }
                 _ => Ok(vec![rule!(*x, Box::new(other.clone()))]),

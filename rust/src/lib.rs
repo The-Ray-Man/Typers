@@ -1,5 +1,4 @@
-mod typers;
-mod utils;
+pub mod typers;
 
 use std::{cmp};
 
@@ -52,7 +51,7 @@ pub fn solve(input: &str) -> Parsed {
     };
 
     // Generate the type constraints from the AST.
-    let typ_inference = TypeInference::new(ast.clone());
+    let typ_inference = TypeInference::infer(ast.clone());
 
     // Tree contains the derivation tree for the expression.
     // constraints contains all the constraints that were generated while building the tree.

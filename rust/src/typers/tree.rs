@@ -51,7 +51,7 @@ pub struct TypeInference {
 
 impl TypeInference {
     // Transform an AST into a tree and a list of constraints.
-    pub fn new(ast: AstNode) -> Result<(Tree, Vec<(TypeExpr, TypeExpr)>), String> {
+    pub fn infer(ast: AstNode) -> Result<(Tree, Vec<(TypeExpr, TypeExpr)>), String> {
         let gamma = HashMap::new();
         let constraints = Vec::<(TypeExpr, TypeExpr)>::new();
         let mut type_inference = TypeInference {

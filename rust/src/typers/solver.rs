@@ -50,9 +50,12 @@ pub struct Solution {
 
 pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution {
     // Initialize solution
-    let mut solution = Solution::default();
-    solution.rules = rules.clone();
-    solution.variables = variables(rules.clone());
+    let mut solution = Solution {
+        rules: rules.clone(),
+        variables: variables(rules.clone()),
+        ..Default::default()
+
+    };
 
     // Set up Vectors for the individual steps
     let _accumulate_steps = Vec::<ResultAccumulateStep>::new();
@@ -212,7 +215,9 @@ fn remove_simple_rule(
             if from == to {
                 let error = format!("recursive definition \\(t_{{{from}}}\\) = \\(t_{{{to}}}\\)!");
                 return Err(error);
-            } else if from < to {
+            }
+            
+            if from < to {
                 std::mem::swap(&mut to, &mut from);
             }
             let msg = format!("Replacing \\(t_{{{from}}}\\) with \\(t_{{{to}}}\\) in all rules");
@@ -289,7 +294,7 @@ fn accumulate_constraints(
 }
 
 /// Find rule for goal variable
-fn find_goal_rule(rules: &mut Vec<RuleExpr>, goal_var: usize) -> Result<RuleExpr, String> {
+fn find_goal_rule(rules: &mut [RuleExpr], goal_var: usize) -> Result<RuleExpr, String> {
     match rules.iter().find(|r| r.has_lhs(goal_var)) {
         Some(goal_rule) => Ok(goal_rule.clone()),
         None => {
