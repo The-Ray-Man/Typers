@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::typers::{mathjax::MathJax, parser::AstNode, rules::TypeExpr};
+use crate::typers::{parser::AstNode, rules::TypeExpr, utils::mathjax::MathJax};
 
 use super::parser::BinOp;
 
@@ -19,32 +19,6 @@ pub struct Tree {
     pub gamma: HashMap<String, TypeExpr>,
     pub expr: (AstNode, TypeExpr),
     pub constraints: Vec<Tree>,
-}
-impl Display for Tree {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let gamma = self
-            .gamma
-            .iter()
-            .map(|(k, v)| format!("{}: {}", k, v))
-            .collect::<Vec<String>>()
-            .join(", ");
-        let bottom = format!("{} ⊢ {} :: {}", gamma, self.expr.0, self.expr.1);
-        let num_constraints = self.constraints.len();
-        let constraints = self
-            .constraints
-            .iter()
-            .map(|a| format!("{}", a))
-            .collect::<Vec<String>>()
-            .join("\n");
-        write!(
-            f,
-            "{}\nrule(n: {}, \"{}\", label:\"{}\"),",
-            constraints,
-            num_constraints,
-            bottom,
-            self.expr.0.current_rule_str()
-        )
-    }
 }
 
 impl From<Tree> for TreeTS {
@@ -116,7 +90,7 @@ impl TypeInference {
             AstNode::Int(num) => Ok(self.build_int(num, gamma, t)?),
             AstNode::True => Ok(self.build_bool(true, gamma, t)?),
             AstNode::False => Ok(self.build_bool(false, gamma, t)?),
-            AstNode::Binop { lhs, op, rhs } => Ok(self.build_binop(*lhs, op, *rhs, gamma, t)?),
+            AstNode::BinOp { lhs, op, rhs } => Ok(self.build_binop(*lhs, op, *rhs, gamma, t)?),
             AstNode::IfThenElse { cond, then, else_ } => {
                 Ok(self.build_if_then_else(*cond, *then, *else_, gamma, t)?)
             }
@@ -278,7 +252,7 @@ impl TypeInference {
         Ok(Tree {
             gamma,
             expr: (
-                AstNode::Binop {
+                AstNode::BinOp {
                     op,
                     lhs: Box::new(lhs),
                     rhs: Box::new(rhs),

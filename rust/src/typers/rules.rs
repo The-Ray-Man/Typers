@@ -1,10 +1,7 @@
-
-
-
 use crate::{rule, var};
 use std::{collections::HashSet, fmt::Display};
 
-use super::mathjax::MathJax;
+use super::utils::mathjax::MathJax;
 
 /// Utility trait to implement these functions for `Vec<RuleExpr>`
 pub trait RuleInfo {
@@ -46,22 +43,6 @@ pub enum TypeExpr {
     Bool,
     /// An integer, the type expression has the form `Int`
     Int,
-}
-
-impl MathJax for TypeExpr {
-    fn to_mathjax(&self) -> String {
-        match self {
-            TypeExpr::Function(left, right) => {
-                format!("({} \\to {})", left.to_mathjax(), right.to_mathjax())
-            }
-            TypeExpr::Tuple(left, right) => {
-                format!("({}, {})", left.to_mathjax(), right.to_mathjax())
-            }
-            TypeExpr::Var(x) => format!("t_{{{}}}", x),
-            TypeExpr::Bool => "Bool".to_string(),
-            TypeExpr::Int => "Int".to_string(),
-        }
-    }
 }
 
 impl TypeExpr {
@@ -200,39 +181,6 @@ impl TypeExpr {
     }
 }
 
-impl Display for TypeExpr {
-    /// Recursively display the type expression, wraps some variants in parenthesis
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            TypeExpr::Function(t1, t2) => {
-                let t1_out = if t1.needs_wrapping() {
-                    format!("({t1})")
-                } else {
-                    format!("{t1}")
-                };
-                // since -> is right associative, no need to put parenthesis around the right part
-                write!(f, "{t1_out} -> {t2}")
-            }
-            TypeExpr::Tuple(t1, t2) => {
-                let t1_out = if t1.needs_wrapping() {
-                    format!("({t1})")
-                } else {
-                    format!("{t1}")
-                };
-                let t2_out = if t2.needs_wrapping() {
-                    format!("({t2})")
-                } else {
-                    format!("{t2}")
-                };
-                write!(f, "({t1_out}, {t2_out})")
-            }
-            TypeExpr::Var(x) => write!(f, "t{x}"),
-            TypeExpr::Bool => write!(f, "Bool"),
-            TypeExpr::Int => write!(f, "Int"),
-        }
-    }
-}
-
 /// A single rule expression, with a left hand side variable and a type expression on the right hand side
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct RuleExpr {
@@ -240,12 +188,6 @@ pub struct RuleExpr {
     pub var: usize,
     /// The type expression on the right hand side
     pub rhs: Box<TypeExpr>,
-}
-
-impl MathJax for RuleExpr {
-    fn to_mathjax(&self) -> String {
-        format!("t_{{{}}} = {}", self.var, self.rhs.to_mathjax())
-    }
 }
 
 impl RuleExpr {
@@ -294,12 +236,5 @@ impl RuleInfo for RuleExpr {
     /// Recursively go through all variables in the right hand side and collect them
     fn all_vars_rhs(&self) -> HashSet<usize> {
         self.rhs.all_vars()
-    }
-}
-
-impl Display for RuleExpr {
-    /// Assumes that variables are being displayed in the form `t0` for variable ID `0`
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "t{} = {}", self.var, self.rhs)
     }
 }

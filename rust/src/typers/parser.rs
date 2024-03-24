@@ -1,13 +1,8 @@
 use core::fmt;
-
-use pest::{
-    iterators::{Pair},
-    Parser,
-};
+use pest::{iterators::Pair, Parser};
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use super::mathjax::MathJax;
-
+/// Represents binary operators.
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub enum BinOp {
@@ -15,15 +10,7 @@ pub enum BinOp {
     Mult,
 }
 
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BinOp::Plus => write!(f, "+"),
-            BinOp::Mult => write!(f, "*"),
-        }
-    }
-}
-
+/// Represents an abstract syntax tree node.
 #[derive(Debug, Clone)]
 pub enum AstNode {
     Var(String),
@@ -39,7 +26,7 @@ pub enum AstNode {
     Int(i32),
     True,
     False,
-    Binop {
+    BinOp {
         op: BinOp,
         lhs: Box<AstNode>,
         rhs: Box<AstNode>,
@@ -57,96 +44,29 @@ pub enum AstNode {
     Snd(Box<AstNode>),
 }
 
-impl fmt::Display for AstNode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AstNode::Var(var) => write!(f, "{}", var),
-            AstNode::Abs { var, body } => write!(f, "\\{} -> {}", var, body),
-            AstNode::App { fun, arg } => write!(f, "({} {})", fun, arg),
-            AstNode::IsZero(expr) => write!(f, "iszero {}", expr),
-            AstNode::Int(int) => write!(f, "{}", int),
-            AstNode::True => write!(f, "true"),
-            AstNode::False => write!(f, "false"),
-            AstNode::Binop { op, lhs, rhs } => write!(f, "({} {} {})", lhs, op, rhs),
-            AstNode::IfThenElse { cond, then, else_ } => {
-                write!(f, "if {} then {} else {}", cond, then, else_)
-            }
-            AstNode::Tuple { fst, snd } => write!(f, "({}, {})", fst, snd),
-            AstNode::Fst(expr) => write!(f, "fst {}", expr),
-            AstNode::Snd(expr) => write!(f, "snd {}", expr),
-        }
-    }
-}
-
-impl MathJax for AstNode {
-    fn to_mathjax(&self) -> String {
-        match self {
-            AstNode::Var(var) => var.clone(),
-            AstNode::Abs { var, body } => format!("\\lambda {} \\ . \\ {}", var, body.to_mathjax()),
-            AstNode::App { fun, arg } => format!("({} \\ {})", fun.to_mathjax(), arg.to_mathjax()),
-            AstNode::IsZero(expr) => format!("\\mathsf{{iszero}} \\ {}", expr.to_mathjax()),
-            AstNode::Int(int) => int.to_string(),
-            AstNode::True => "\\mathsf{{true}}".to_string(),
-            AstNode::False => "\\mathsf{{false}}".to_string(),
-            AstNode::Binop { op, lhs, rhs } => {
-                format!("({} {} {})", lhs.to_mathjax(), op, rhs.to_mathjax())
-            }
-            AstNode::IfThenElse { cond, then, else_ } => format!(
-                "\\mathsf{{if}} \\ {} \\ \\mathsf{{then}} \\ {} \\ \\mathsf{{else}} \\ {}",
-                cond.to_mathjax(),
-                then.to_mathjax(),
-                else_.to_mathjax()
-            ),
-            AstNode::Tuple { fst, snd } => {
-                format!("({},\\ {})", fst.to_mathjax(), snd.to_mathjax())
-            }
-            AstNode::Fst(expr) => format!("\\mathsf{{fst}} \\ {}", expr.to_mathjax()),
-            AstNode::Snd(expr) => format!("\\mathsf{{snd}} \\ {}", expr.to_mathjax()),
-        }
-    }
-}
-
-impl AstNode {
-    pub fn current_rule_str(&self) -> String {
-        let res = match self {
-            AstNode::Var(_) => "Var",
-            AstNode::Abs { .. } => "Abs",
-            AstNode::App { .. } => "App",
-            AstNode::IsZero(_) => "iszero",
-            AstNode::Int(_) => "Int",
-            AstNode::True => "True",
-            AstNode::False => "False",
-            AstNode::Binop { .. } => "BinOp",
-            AstNode::IfThenElse { .. } => "if",
-            AstNode::Tuple { .. } => "tuple",
-            AstNode::Fst(_) => "fst",
-            AstNode::Snd(_) => "snd",
-        };
-        res.to_string()
-    }
-}
-
+/// Parser for the MiniHaskell language.
 #[derive(pest_derive::Parser)]
 #[grammar = "./typers/miniHaskell.pest"]
 pub struct MiniHaskellParser;
 
 impl MiniHaskellParser {
+    /// Parses a string into a `Pair` representing the root rule of the grammar.
     pub fn parse_str(input: &str) -> Result<Pair<'_, Rule>, String> {
-        let parsed = Self::parse(Rule::expr, input);
-
-        let mut parsed = parsed.map_err(|e| format!("{}", e))?;
+        // Parse the input string
+        let mut parsed = Self::parse(Rule::expr, input).map_err(|e| format!("{}", e))?;
 
         let first_pair = parsed.next().ok_or("no first pair".to_string())?;
 
         Ok(first_pair)
     }
 
-    pub fn build_ast_(pair: Pair<Rule>) -> Result<AstNode, String> {
+    /// Builds an abstract syntax tree from a `Pair` representing a rule.
+    pub fn build_ast(pair: Pair<Rule>) -> Result<AstNode, String> {
         match pair.as_rule() {
             Rule::var => Ok(Self::build_ast_var(pair)?),
             Rule::abs => Ok(Self::build_ast_abs(pair)?),
             Rule::app => Ok(Self::build_ast_app(pair)?),
-            Rule::iszero => Ok(Self::build_ast_iszero(pair)?),
+            Rule::isZero => Ok(Self::build_ast_iszero(pair)?),
             Rule::int => Ok(Self::build_ast_int(pair)?),
             Rule::boolean => Ok(Self::build_ast_boolean(pair)?),
             Rule::binOp => Ok(Self::build_ast_binop(pair)?),
@@ -154,24 +74,23 @@ impl MiniHaskellParser {
             Rule::tuple => Ok(Self::build_ast_tuple(pair)?),
             Rule::fst => Ok(Self::build_ast_fst(pair)?),
             Rule::snd => Ok(Self::build_ast_snd(pair)?),
-            e => {
-                dbg!(e);
-                Err("rule not implemented".to_string())
-            }
+            e => Err(format!("unexpected rule: {:?}", e)),
         }
     }
 
+    /// Builds an abstract syntax tree node for a variable.
     pub fn build_ast_var(pair: Pair<Rule>) -> Result<AstNode, String> {
         Ok(AstNode::Var(pair.as_str().to_string()))
     }
 
+    /// Builds an abstract syntax tree node for an abstraction.
     pub fn build_ast_abs(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let var = pairs.next().ok_or("no var".to_string())?;
         let body = pairs.next().ok_or("no body".to_string())?;
 
         let var = var.as_str().to_string();
-        let body = Self::build_ast_(body)?;
+        let body = Self::build_ast(body)?;
 
         Ok(AstNode::Abs {
             var,
@@ -179,13 +98,14 @@ impl MiniHaskellParser {
         })
     }
 
+    /// Builds an abstract syntax tree node for an application.
     pub fn build_ast_app(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let fun = pairs.next().ok_or("no fun".to_string())?;
         let arg = pairs.next().ok_or("no arg".to_string())?;
 
-        let fun = Self::build_ast_(fun)?;
-        let arg = Self::build_ast_(arg)?;
+        let fun = Self::build_ast(fun)?;
+        let arg = Self::build_ast(arg)?;
 
         Ok(AstNode::App {
             fun: Box::new(fun),
@@ -193,18 +113,21 @@ impl MiniHaskellParser {
         })
     }
 
+    /// Builds an abstract syntax tree node for an iszero expression.
     pub fn build_ast_iszero(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let expr = pairs.next().ok_or("no expr".to_string())?;
-        let expr = Self::build_ast_(expr)?;
+        let expr = Self::build_ast(expr)?;
         Ok(AstNode::IsZero(Box::new(expr)))
     }
 
+    /// Builds an abstract syntax tree node for an integer.
     pub fn build_ast_int(pair: Pair<Rule>) -> Result<AstNode, String> {
         let int = pair.as_str().parse::<i32>().map_err(|e| format!("{}", e))?;
         Ok(AstNode::Int(int))
     }
 
+    /// Builds an abstract syntax tree node for a boolean.
     pub fn build_ast_boolean(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let pair = pairs.next().ok_or("no boolean".to_string())?;
@@ -216,6 +139,7 @@ impl MiniHaskellParser {
         }
     }
 
+    /// Builds a binary operator from a `Pair` representing a binOp rule.
     pub fn build_ast_op(pair: Pair<Rule>) -> Result<BinOp, String> {
         match pair.as_rule() {
             Rule::add => Ok(BinOp::Plus),
@@ -224,6 +148,7 @@ impl MiniHaskellParser {
         }
     }
 
+    /// Builds an abstract syntax tree node for a binary operation.
     pub fn build_ast_binop(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
 
@@ -233,25 +158,26 @@ impl MiniHaskellParser {
 
         dbg!(&lhs, &binop, &rhs);
 
-        let lhs = Self::build_ast_(lhs)?;
+        let lhs = Self::build_ast(lhs)?;
         let op = Self::build_ast_op(binop)?;
-        let rhs = Self::build_ast_(rhs)?;
-        Ok(AstNode::Binop {
+        let rhs = Self::build_ast(rhs)?;
+        Ok(AstNode::BinOp {
             op,
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         })
     }
 
+    /// Builds an abstract syntax tree node for an if-then-else expression.
     pub fn build_ast_if_then_else(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let cond = pairs.next().ok_or("no cond".to_string())?;
         let then = pairs.next().ok_or("no then".to_string())?;
         let else_ = pairs.next().ok_or("no else".to_string())?;
 
-        let cond = Self::build_ast_(cond)?;
-        let then = Self::build_ast_(then)?;
-        let else_ = Self::build_ast_(else_)?;
+        let cond = Self::build_ast(cond)?;
+        let then = Self::build_ast(then)?;
+        let else_ = Self::build_ast(else_)?;
 
         Ok(AstNode::IfThenElse {
             cond: Box::new(cond),
@@ -260,13 +186,14 @@ impl MiniHaskellParser {
         })
     }
 
+    /// Builds an abstract syntax tree node for a tuple.
     pub fn build_ast_tuple(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let fst = pairs.next().ok_or("no fst".to_string())?;
         let snd = pairs.next().ok_or("no snd".to_string())?;
 
-        let fst = Self::build_ast_(fst)?;
-        let snd = Self::build_ast_(snd)?;
+        let fst = Self::build_ast(fst)?;
+        let snd = Self::build_ast(snd)?;
 
         Ok(AstNode::Tuple {
             fst: Box::new(fst),
@@ -274,17 +201,19 @@ impl MiniHaskellParser {
         })
     }
 
+    /// Builds an abstract syntax tree node for the `fst` operation.
     pub fn build_ast_fst(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let expr = pairs.next().ok_or("no expr".to_string())?;
-        let expr = Self::build_ast_(expr)?;
+        let expr = Self::build_ast(expr)?;
         Ok(AstNode::Fst(Box::new(expr)))
     }
 
+    /// Builds an abstract syntax tree node for the `snd` operation.
     pub fn build_ast_snd(pair: Pair<Rule>) -> Result<AstNode, String> {
         let mut pairs = pair.into_inner();
         let expr = pairs.next().ok_or("no expr".to_string())?;
-        let expr = Self::build_ast_(expr)?;
+        let expr = Self::build_ast(expr)?;
         Ok(AstNode::Snd(Box::new(expr)))
     }
 }
