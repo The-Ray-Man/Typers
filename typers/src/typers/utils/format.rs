@@ -59,10 +59,9 @@ impl Display for Tree {
         )
     }
 }
-
-impl From<AstNode> for String {
-    fn from(val: AstNode) -> Self {
-        let res = match val {
+impl AstNode {
+    pub fn name(&self) -> String {
+        let res = match self {
             AstNode::Var(_) => "Var",
             AstNode::Abs { .. } => "Abs",
             AstNode::App { .. } => "App",

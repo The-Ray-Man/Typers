@@ -17,6 +17,6 @@ This starts the ```main``` function in ```src/test.rs```.
 ### Build
 To build the project, use the following command:
 ```shell
-wasm-pack build --target web --out-name FMFP --out-dir ../web/wasm
+wasm-pack build --target web --out-name fmfp --out-dir ../web/wasm
 ```
 This will compile the Rust code into a Wasm binary, which can be used in a web environment.

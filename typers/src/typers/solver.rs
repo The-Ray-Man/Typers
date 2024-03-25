@@ -1,7 +1,6 @@
 use crate::typers::rules::{RuleExpr, RuleInfo};
 use std::collections::{HashMap, HashSet, VecDeque};
 
-
 use super::utils::mathjax::MathJax;
 
 #[derive(Debug, Clone)]
@@ -54,7 +53,6 @@ pub fn solve_constraints(mut rules: Vec<RuleExpr>, goal_var: usize) -> Solution 
         rules: rules.clone(),
         variables: variables(rules.clone()),
         ..Default::default()
-
     };
 
     // Set up Vectors for the individual steps
@@ -216,7 +214,7 @@ fn remove_simple_rule(
                 let error = format!("recursive definition \\(t_{{{from}}}\\) = \\(t_{{{to}}}\\)!");
                 return Err(error);
             }
-            
+
             if from < to {
                 std::mem::swap(&mut to, &mut from);
             }

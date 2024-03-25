@@ -76,7 +76,10 @@ impl MathJax for Tree {
             .join("\\qquad");
         format!(
             "\\dfrac{{{}}} {{{} \\vdash {}}} \\textsf{{{}}}",
-            constraints, gamma, expr, self.expr.0
+            constraints,
+            gamma,
+            expr,
+            self.expr.0.name()
         )
     }
 }

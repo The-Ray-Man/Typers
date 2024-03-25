@@ -1,7 +1,5 @@
 use crate::{rule, var};
-use std::{collections::HashSet};
-
-
+use std::collections::HashSet;
 
 /// Utility trait to implement these functions for `Vec<RuleExpr>`
 pub trait RuleInfo {
@@ -160,7 +158,7 @@ impl TypeExpr {
                     match x.cmp(c) {
                         std::cmp::Ordering::Less => Ok(vec![rule!(*x, var!(*c))]),
                         std::cmp::Ordering::Greater => Ok(vec![rule!(*c, var!(*x))]),
-                        std::cmp::Ordering::Equal => Ok(vec![])
+                        std::cmp::Ordering::Equal => Ok(vec![]),
                     }
                 }
                 _ => Ok(vec![rule!(*x, Box::new(other.clone()))]),

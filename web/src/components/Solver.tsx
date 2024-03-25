@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TreeTS, parse_input } from "FMFP";
+import { TreeTS, solve } from "FMFP";
 import {
   Center,
   TextInput,
@@ -24,12 +24,7 @@ import MiniHaskell from "./MiniHaskell";
 const Solver = () => {
   const [input, setInput] = useState("");
 
-  let parse = async () => {
-    const parsed = parse_input(input);
-    console.log(parsed);
-  };
-
-  const parsed = parse_input(input);
+  const parsed = solve(input);
 
   const [showHaskell, setShowHaskell] = useState(false);
 
@@ -107,10 +102,14 @@ const Solver = () => {
               {parsed.constraints_error && (
                 <Error error={parsed.constraints_error} />
               )}
-              {parsed.constraints && (
-                <Constraints constraints={parsed.constraints} />
+              {parsed.constraints && parsed.constraints_without_trivial && (
+                <Constraints
+                  constraints={parsed.constraints}
+                  constraints_without_trivial={
+                    parsed.constraints_without_trivial
+                  }
+                />
               )}
-              {parsed.solution_error && <Error error={parsed.solution_error} />}
               {parsed.solution && parsed.solution.variables && (
                 <Variables variables={parsed.solution.variables} />
               )}

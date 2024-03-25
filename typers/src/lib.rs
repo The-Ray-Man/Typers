@@ -1,6 +1,6 @@
 pub mod typers;
 
-use std::{cmp};
+use std::cmp;
 
 use typers::{
     parser::MiniHaskellParser, rules::RuleExpr, solver::solve_constraints, tree::TypeInference,
@@ -38,6 +38,7 @@ pub fn solve(input: &str) -> Parsed {
         }
     };
 
+    dbg!("CHECKPOINT: 1");
     // build the AST from the parsed input.
     let ast = MiniHaskellParser::build_ast(parsed);
 
@@ -49,6 +50,7 @@ pub fn solve(input: &str) -> Parsed {
             return result;
         }
     };
+    dbg!("CHECKPOINT: 2");
 
     // Generate the type constraints from the AST.
     let typ_inference = TypeInference::infer(ast.clone());
@@ -65,6 +67,7 @@ pub fn solve(input: &str) -> Parsed {
 
     result.tree = Some(tree.to_mathjax());
 
+    dbg!("CHECKPOINT: 3");
     // All the constraints found in the tree.
     result.constraints = Some(
         constraints
@@ -74,10 +77,15 @@ pub fn solve(input: &str) -> Parsed {
     );
 
     // Remove the trivial constraints from the constraints.
+    let constraints_without_trivial = constraints
+        .iter()
+        .filter(|(a, b)| a != b)
+        .cloned()
+        .collect::<Vec<_>>();
+
     result.constraints_without_trivial = Some(
-        constraints
+        constraints_without_trivial
             .iter()
-            .filter(|(a, b)| a != b)
             .map(|(a, b)| format!("{} = {}", a.to_mathjax(), b.to_mathjax()))
             .collect::<Vec<_>>(),
     );
@@ -88,14 +96,25 @@ pub fn solve(input: &str) -> Parsed {
     // This is done by introducing a new `t_i` and adding the constraints `t_i = TypeExpr_1` and `t_i = TypeExpr_2`.
 
     // Get the maximum variable used in the construction
-    let mut maximum = get_max_var(constraints.clone()) + 1;
+    let mut maximum = get_max_var(constraints_without_trivial.clone()) + 1;
 
     let mut new_constraints = Vec::<RuleExpr>::new();
 
-    for (a, b) in constraints {
+    for (a, b) in constraints_without_trivial {
+        if a == b {
+            continue;
+        }
+
         match (a, b) {
+            // check if the rule is duplicated
             (TypeExpr::Var(x), b) => {
                 // Normal form
+                if new_constraints
+                    .iter()
+                    .any(|rule| *rule.rhs == b && rule.var == x)
+                {
+                    continue;
+                }
                 new_constraints.push(RuleExpr {
                     var: x,
                     rhs: Box::new(b.clone()),
@@ -103,6 +122,12 @@ pub fn solve(input: &str) -> Parsed {
             }
             (a, TypeExpr::Var(x)) => {
                 // Almost normal form, we need to swap the variables.
+                if new_constraints
+                    .iter()
+                    .any(|rule| *rule.rhs == a && rule.var == x)
+                {
+                    continue;
+                }
                 new_constraints.push(RuleExpr {
                     var: x,
                     rhs: Box::new(a.clone()),
@@ -122,6 +147,7 @@ pub fn solve(input: &str) -> Parsed {
         }
     }
 
+    dbg!("CHECKPOINT: 4");
     // Solve the constraints
     let solution = solve_constraints(new_constraints, 0);
 

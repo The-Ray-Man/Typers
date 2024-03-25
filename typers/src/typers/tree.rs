@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -86,7 +86,7 @@ impl TypeInference {
             AstNode::Var(var) => Ok(self.build_var(var, gamma, t)?),
             AstNode::Abs { var, body } => Ok(self.build_abs(var, *body, gamma, t)?),
             AstNode::App { fun, arg } => Ok(self.build_app(*fun, *arg, gamma, t)?),
-            AstNode::IsZero(_expr) => Ok(self.build_zero(ast, gamma, t)?),
+            AstNode::IsZero(expr) => Ok(self.build_zero(*expr, gamma, t)?),
             AstNode::Int(num) => Ok(self.build_int(num, gamma, t)?),
             AstNode::True => Ok(self.build_bool(true, gamma, t)?),
             AstNode::False => Ok(self.build_bool(false, gamma, t)?),
@@ -108,6 +108,7 @@ impl TypeInference {
         t: TypeExpr,
     ) -> Result<Tree, String> {
         // Check if the variable is in the gamma. If it is not, the tree is invalid and a error is returned.
+        dbg!("build var");
         let type_var = gamma
             .get(&var.to_string())
             .ok_or(format!("{} not found!", var).to_string())?;
@@ -130,6 +131,7 @@ impl TypeInference {
         t: TypeExpr,
     ) -> Result<Tree, String> {
         // Check if the type of the expression has already the function form.
+        dbg!("build abs");
         if let TypeExpr::Function(sigma, tau) = t.clone() {
             let mut new_gamma = gamma.clone();
             new_gamma.insert(var.clone(), *sigma);
@@ -175,6 +177,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build app");
         let sigma = self.new_typ();
         let new_t = TypeExpr::Function(Box::new(sigma.clone()), Box::new(t.clone()));
         let fun_tree = self.build_tree(fun.clone(), gamma.clone(), new_t)?;
@@ -199,6 +202,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build zero");
         let expr_tree = self.build_tree(expr.clone(), gamma.clone(), TypeExpr::Int)?;
         self.add_constraint(&t, &TypeExpr::Bool);
         Ok(Tree {
@@ -214,6 +218,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build int");
         self.add_constraint(&t, &TypeExpr::Int);
         Ok(Tree {
             gamma,
@@ -228,6 +233,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build bool");
         self.add_constraint(&t, &TypeExpr::Bool);
         Ok(Tree {
             gamma,
@@ -245,6 +251,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build binop");
         self.add_constraint(&t, &TypeExpr::Int);
         let lhs_tree = self.build_tree(lhs.clone(), gamma.clone(), TypeExpr::Int)?;
         let rhs_tree = self.build_tree(rhs.clone(), gamma.clone(), TypeExpr::Int)?;
@@ -272,6 +279,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build if then else");
         let cond_tree = self.build_tree(cond.clone(), gamma.clone(), TypeExpr::Bool)?;
         let then_tree = self.build_tree(then.clone(), gamma.clone(), t.clone())?;
         let else_tree = self.build_tree(else_.clone(), gamma.clone(), t.clone())?;
@@ -298,6 +306,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build tuple");
         // Check if the type of the expression has already the tuple form.
         if let TypeExpr::Tuple(a, b) = t.clone() {
             let fst_tree = self.build_tree(fst.clone(), gamma.clone(), *a)?;
@@ -344,6 +353,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build fst");
         let b = self.new_typ();
         let new_t = TypeExpr::Tuple(Box::new(t.clone()), Box::new(b));
 
@@ -363,6 +373,7 @@ impl TypeInference {
         gamma: HashMap<String, TypeExpr>,
         t: TypeExpr,
     ) -> Result<Tree, String> {
+        dbg!("build snd");
         let a = self.new_typ();
         let new_t = TypeExpr::Tuple(Box::new(a), Box::new(t.clone()));
 

@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::typers::{
-    solver::{ResultAccumulateStep, ResultRemoveStep, ResultSubstituteStep, Solution},
+use crate::typers::solver::{
+    ResultAccumulateStep, ResultRemoveStep, ResultSubstituteStep, Solution,
 };
 
 use super::mathjax::MathJax;
