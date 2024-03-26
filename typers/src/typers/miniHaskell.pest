@@ -20,12 +20,12 @@ fst_ = _{"fst"}
 snd_ = _{"snd"}
 comma = _{","}
 
-abs = {"\\" ~ var ~ arrow ~ expr}
+abs = {"(" ~ "\\" ~ var ~ arrow ~ expr ~ ")"}
 app = {"(" ~ expr ~ expr ~ ")"}
 isZero = {"(" ~ isZero_ ~ expr ~ ")"}
 int = @{ ASCII_DIGIT+ }
 binOp = {"(" ~ expr ~ bin_op ~ expr ~ ")"}
-ifThenElse = {if ~ expr ~ then ~ expr ~ else ~ expr}
+ifThenElse = {"(" ~ if ~ expr ~ then ~ expr ~ else ~ expr ~ ")"}
 tuple = {"(" ~ expr ~ comma ~ expr ~ ")" }
 fst = {"(" ~ fst_ ~ expr ~ ")"}
 snd = {"(" ~ snd_ ~ expr ~ ")"}

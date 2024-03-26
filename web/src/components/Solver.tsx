@@ -34,7 +34,7 @@ const Solver = () => {
         <Stack pt={"xl"} pb={"xl"} justify="space-between">
           <Box>
             <TextInput
-              placeholder="\x -> \y -> (x y)"
+              placeholder="(\x -> (\y -> (x y)))"
               value={input}
               onChange={(e) => setInput(e.currentTarget.value)}
               miw={600}
@@ -42,13 +42,13 @@ const Solver = () => {
               pb={0}
             />
             <Text pt={0} c={"dimmed"}>
-              Every expression except the lambda function and primitive types
+              Every expression except primitive types
               have to be in brackets
             </Text>
             <Flex gap={"md"} justify={"space-around"} align={"center"}>
               <Button
                 variant="transparent"
-                onClick={() => setInput("\\x -> \\y -> (x y)")}
+                onClick={() => setInput("(\\x -> (\\y -> (x y)))")}
               >
                 Simple Example
               </Button>
@@ -56,7 +56,7 @@ const Solver = () => {
                 variant="transparent"
                 onClick={() =>
                   setInput(
-                    "\\x -> \\y -> if (iszero y) then (x + y) else (x * y)",
+                    "(\\x -> (\\y -> (if (iszero y) then (x + y) else (x * y))))",
                   )
                 }
               >
@@ -66,7 +66,7 @@ const Solver = () => {
                 variant="transparent"
                 onClick={() =>
                   setInput(
-                    "\\x -> if ((snd x) 1) then \\y -> ((fst x) y) else \\z -> (iszero ((z +1) * 3))",
+                    "(\\x -> (if ((snd x) 1) then (\\y -> ((fst x) y)) else (\\z -> (iszero ((z +1) * 3)))))",
                   )
                 }
               >
